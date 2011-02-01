@@ -1,0 +1,3 @@
+[submodule "src/lib/yaml-cpp"]
+	path = src/lib/yaml-cpp
+	url = https://github.com/journeydynamics/yaml-cpp.git
