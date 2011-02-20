@@ -12,12 +12,11 @@ namespace DM {
 
 /** Config read and stores the configuration file.
  * The file is written in YAML syntax and MUST have these keys:
- * name, port, ip, blocks
+ * port, ip, blocks
  */
 class Config {
   /** Stores the informations about each server */
   struct Server {
-    string name;
     string ip;
     string port;
     vector<int> blocks;
@@ -29,7 +28,7 @@ public:
    * Istantiate a new Config object and parse the YAML file.
    * \param filename The path of the config file to parse
    */
-  Config(char* filename);
+  Config(string filename);
 
   /** Output operator <<. Useful for debug */
   friend ostream& operator<<(ostream& output, const Config& c);
