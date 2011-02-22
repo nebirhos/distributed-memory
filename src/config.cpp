@@ -1,5 +1,5 @@
 #include "config.h"
-#include "yaml.h"
+#include <yaml.h>
 #include <fstream>
 using namespace std;
 

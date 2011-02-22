@@ -2,21 +2,17 @@ CXX = g++
 BIN = ../bin/dmserver
 SOURCES = dmserver.cpp config.cpp server.cpp block.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-CXXFLAGS = -Wall
-LDFLAGS = -Llib/yaml-cpp/ -lyaml-cpp -Ilib/yaml-cpp/include/
+CPPFLAGS += -I../lib/yaml-cpp/include/
+CXXFLAGS += -Wall
+LDFLAGS += -L../lib/yaml-cpp/ -lyaml-cpp -lpthread
 
 all: $(BIN)
 
-$(BIN): $(OBJECTS) extlibraries
+$(BIN): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(LDFLAGS) -o $(BIN)
 
 .cpp.o:
-	$(CXX) -c $(CXXFLAGS) $(LDFLAGS) $< -o $@
-
-extlibraries:
-	@echo Compiling external libraries...
-	$(MAKE) -C lib/
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 clean:
 	rm -f $(BIN) $(OBJECTS)
-	$(MAKE) -C lib/ clean
