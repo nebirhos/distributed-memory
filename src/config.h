@@ -22,8 +22,7 @@ public:
    * \param filename The path of the config file to parse
    */
   Config(string filename);
-  bool is_server_id_valid(string server_id) const;
-  vector<int> find_blocks_id_by_server_id(string server_id) const;
+  ServerConf find(string id) const;
   /** Output operator <<. Useful for debug */
   friend ostream& operator<<(ostream& output, const Config& c);
 

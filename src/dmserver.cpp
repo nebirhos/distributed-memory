@@ -7,6 +7,7 @@ using namespace std;
 
 string config_path = DEFAULT_CONFIG_PATH;
 string server_id;
+DM::Server* server;
 
 void show_usage(int exit_code);
 void parse_args(int argc, char* argv[]);
@@ -14,12 +15,10 @@ void kill_handler(int sig);
 
 int main(int argc, char *argv[]) {
   parse_args(argc, argv);
-  cout << "server_id: " << server_id << endl;
-  cout << "config_path: " << config_path << endl;
 
-  DM::Server server = DM::Server(config_path, server_id);
+  server = new DM::Server(config_path, server_id);
   signal(SIGINT, kill_handler);
-  server.start();
+  server->start();
 
   return 0;
 }
@@ -56,6 +55,7 @@ void parse_args(int argc, char* argv[]) {
 }
 
 void kill_handler(int sig) {
+  server->stop();
   cout << "Exiting..." << endl;
   exit(0);
 }

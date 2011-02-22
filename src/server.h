@@ -17,6 +17,19 @@ private:
   const Config config;
   const string id;
   vector<Block> blocks;
+  int listen_socket;
+
+  int open_socket();
+  /**
+   * Cause pthread expects a C-style function, we use this static method
+   * to call the member method of the Server object
+   */
+  struct WrapperArgs {
+    Server* obj;
+    int socket_d;
+  };
+  static void* thread_wrapper(void*);
+  void accept_request(int socket_d);
 };
 
 }

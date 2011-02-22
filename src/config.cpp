@@ -1,6 +1,7 @@
 #include "config.h"
 #include <yaml.h>
 #include <fstream>
+#include <sstream>
 using namespace std;
 
 
@@ -20,8 +21,9 @@ Config::Config(string filename) {
       server_conf["ip"] >> server.ip;
       server_conf["port"] >> server.port;
       server.blocks_id = server_conf["blocks"];
-      string id = server.ip + ":" + server.port;
-      servers[id] = server;
+      ostringstream id;
+      id << server.ip << ":" << server.port;
+      servers[id.str()] = server;
     }
   }
   catch(...) {
@@ -29,12 +31,11 @@ Config::Config(string filename) {
   }
 }
 
-bool Config::is_server_id_valid(string server_id) const {
-  return (servers.find(server_id) != servers.end());
-}
-
-vector<int> Config::find_blocks_id_by_server_id(string server_id) const {
-  return servers.find(server_id)->second.blocks_id;
+ServerConf Config::find(string id) const {
+  if (servers.find(id) == servers.end() ) {
+    throw "FIXME";
+  }
+  return servers.find(id)->second;
 }
 
 ostream& operator<<(ostream& output, const Config& c) {
