@@ -1,9 +1,9 @@
 CXX = g++
 BIN = ../bin/dmserver
-SOURCES = dmserver.cpp config.cpp server.cpp block.cpp
+SOURCES = dmserver.cpp config.cpp server.cpp block.cpp message.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 CPPFLAGS += -I../lib/yaml-cpp/include/
-CXXFLAGS += -Wall
+CXXFLAGS += -Wall -Wextra
 LDFLAGS += -L../lib/yaml-cpp/ -lyaml-cpp -lpthread
 
 all: $(BIN)

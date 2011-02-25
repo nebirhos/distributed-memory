@@ -19,6 +19,16 @@ struct ServerConf {
   vector<int> blocks_id;
 };
 
+enum MessageType {
+  MAP    = 1,
+  UNMAP  = 2,
+  UPDATE = 3,
+  WRITE  = 4,
+  WAIT   = 5,
+  ACK    = 6,
+  UNDEF  = -1
+};
+
 } // namespace DM
 
 #endif /* _DM_TYPE_H_ */
