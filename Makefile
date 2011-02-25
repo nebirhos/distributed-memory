@@ -4,6 +4,7 @@ all: extlibraries
 extlibraries:
 	@echo Compiling external libraries...
 	$(MAKE) -C lib/
+	$(MAKE) -C lib/gtest/
 
 documentation:
 	doxygen doc/doxygen/config
@@ -13,3 +14,4 @@ clean:
 	rm -rf doc/doxygen/latex/
 	$(MAKE) clean -C src/
 	$(MAKE) clean -C lib/
+	$(MAKE) clean -C lib/gtest/
