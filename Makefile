@@ -3,7 +3,7 @@ all: extlibraries
 
 extlibraries:
 	@echo Compiling external libraries...
-	$(MAKE) -C lib/
+	$(MAKE) -C lib/yaml-cpp/
 	$(MAKE) -C lib/gtest/
 
 documentation:
@@ -13,5 +13,5 @@ clean:
 	rm -rf doc/doxygen/html/
 	rm -rf doc/doxygen/latex/
 	$(MAKE) clean -C src/
-	$(MAKE) clean -C lib/
+	$(MAKE) clean -C lib/yaml-cpp/
 	$(MAKE) clean -C lib/gtest/
