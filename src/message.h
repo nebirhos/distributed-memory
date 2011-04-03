@@ -14,18 +14,22 @@ public:
   Message& parse(string message);
 
   MessageType type();
-  int block();
+  const Block* block();
 
   static string emit(MessageType);
+  static string emit(MessageType, const Block&);
 
 private:
   YAML::Node node;
+  Block* m_block;
   // Static members to save memory
   static map<string,MessageType> string_to_type;
   static map<MessageType,string> type_to_string;
   static void maps_initializer();
   static bool maps_init;
 };
+
+YAML::Emitter& operator<<(YAML::Emitter& out, const Block& b);
 
 } // namespace DM
 

@@ -1,4 +1,5 @@
 #include "message.h"
+#include "base64.h"
 #include <map>
 #include <sstream>
 
@@ -26,7 +27,8 @@ void Message::maps_initializer() {
   Message::type_to_string[UNDEF]  = "UNDEF";
 }
 
-Message::Message(string message) {
+Message::Message(string message)
+  : m_block(NULL) {
   static bool maps_init = false;
   if (!maps_init) {
     maps_initializer();
@@ -41,9 +43,11 @@ Message& Message::parse(string message) {
     istringstream ss(message);
     YAML::Parser parser(ss);
     parser.GetNextDocument(node);
+    delete m_block;             // maybe there is already a block instatiated
+    m_block = NULL;
   }
   catch(YAML::Exception& e) {
-    cout << e.what() << endl;
+    cout << e.what() << endl;   // FIXME
   }
   return *this;
 }
@@ -61,24 +65,54 @@ MessageType Message::type() {
   }
 }
 
-int Message::block() {
+const Block* Message::block() {
   try {
-    return node["block"];
+    if (m_block == NULL) {
+      int block_id = node["block"]["id"];
+      m_block = new BlockServer( block_id );
+      m_block->revision( node["block"]["revision"] );
+
+      string block_data = node["block"]["data"];
+      char* buffer = new char[m_block->size()];
+      base64::decode( block_data.c_str(), block_data.size(), buffer, m_block->size()+1 );
+      m_block->data( buffer );
+      delete[] buffer;
+    }
   }
   catch(YAML::Exception& e) {
-    return -1;
+    cout << "FIXME Message::block" << endl;
+    cout << e.what() << endl;
   }
+  return m_block;
 }
 
 string Message::emit(MessageType type) {
   YAML::Emitter emt;
   emt << YAML::Flow;            // short YAML syntax - aka JSON
   emt << YAML::BeginMap;
-  emt << YAML::Key << "type";
-  emt << YAML::Value << type_to_string[type];
+  emt << YAML::Key << "type" << YAML::Value << type_to_string[type];
   emt << YAML::EndMap;
-  string result(emt.c_str());
-  return result;
+  return emt.c_str();
+}
+
+string Message::emit(MessageType type, const Block& block) {
+  YAML::Emitter emt;
+  emt << YAML::Flow;
+  emt << YAML::BeginMap;
+  emt << YAML::Key << "type" << YAML::Value << type_to_string[type];
+  emt << YAML::Key << "block" << YAML::Value << block;
+  emt << YAML::EndMap;
+  return emt.c_str();
+}
+
+YAML::Emitter& operator<<(YAML::Emitter& out, const Block& b) {
+  out << YAML::Flow;
+  out << YAML::BeginMap;
+  out << YAML::Key << "id" << YAML::Value << b.id();
+  out << YAML::Key << "revision" << YAML::Value << b.revision();
+  out << YAML::Key << "data" << YAML::Value << YAML::Binary((char*) b.data(), b.size());
+  out << YAML::EndMap;
+  return out;
 }
 
 } // namespace DM

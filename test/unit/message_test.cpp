@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include <message.h>
+#include <block_server.h>
+#include <base64.h>
+
 
 // Parsing
 TEST(DM_Message, parse_unknown_keys) {
@@ -19,20 +22,21 @@ TEST(DM_Message, parse_type) {
   EXPECT_EQ( DM::ACK, p.parse("{type: ACK}").type() );
 }
 
-TEST(DM_Message, parse_block) {
-  DM::Message p;
-  EXPECT_EQ( 123, p.parse("{type: MAP, block: 123}").block() );
-  EXPECT_EQ( -1, p.parse("{block: FOO}").block() );
-}
-
 // Emitting
 TEST(DM_Message, emit) {
-  EXPECT_STREQ( "--- {type: ACK}", DM::Message::emit(DM::ACK).c_str() );
+  EXPECT_STREQ( "{type: ACK}", DM::Message::emit(DM::ACK).c_str() );
 }
 
-// Combo
 TEST(DM_Message, emit_and_parse) {
-  string emitted = DM::Message::emit(DM::UPDATE);
+  const char block_data[128] = "foo bar";
+  const int block_id = 123;
+  const DM::MessageType msg_type = DM::MAP;
+  DM::BlockServer block(block_id);
+  block.data(block_data);
+  string emitted = DM::Message::emit(msg_type, block);
+
   DM::Message p(emitted);
-  EXPECT_EQ( DM::UPDATE, p.type() );
+  EXPECT_EQ( msg_type, p.type() );
+  EXPECT_EQ( block_id, p.block()->id() );
+  EXPECT_STREQ( block_data, (const char*) p.block()->data() );
 }
