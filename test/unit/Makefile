@@ -14,7 +14,15 @@ CXXFLAGS += -g -Wall -Wextra
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = message_test
+TESTS = message_test \
+        block_server_test \
+        config_test
+
+SOURCES = message_test.cpp \
+          block_server_test.cpp \
+          config_test.cpp
+
+OBJECTS = $(SOURCES:.cpp=.o)
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -33,9 +41,22 @@ clean :
 run :
 	for i in *_test; do echo "\nRunning $$i"; ./$$i; done;
 
-message_test.o: message_test.cpp \
-                     $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c message_test.cpp
-
 message_test : message_test.o
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(USER_DIR)/message.o $^ $(LDFLAGS) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(USER_DIR)/message.o \
+                                 $(USER_DIR)/block_server.o \
+                                 $(USER_DIR)/block.o \
+                                 $(USER_DIR)/base64.o \
+                                 $^ $(LDFLAGS) -o $@
+
+block_server_test : block_server_test.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(USER_DIR)/block_server.o \
+                                 $(USER_DIR)/block.o \
+                                 $^ $(LDFLAGS) -o $@
+
+config_test : config_test.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(USER_DIR)/config.o \
+                                 $^ $(LDFLAGS) -o $@
+
+.cpp.o: $< \
+        $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@

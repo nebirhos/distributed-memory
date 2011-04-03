@@ -1,0 +1,12 @@
+# Test configuration file
+- port: 123
+  ip: 1.2.3.4
+  blocks: [1, 3, 5]
+
+- port: 456
+  ip: 1.2.3.4
+  blocks: [2, 4, 6]
+
+- port: 789
+  ip: www.foo.com
+  blocks: [70, 800, 900, 100]
