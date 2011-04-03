@@ -1,6 +1,6 @@
 CXX = g++
 BIN = ../bin/dmserver
-SOURCES = dmserver.cpp config.cpp
+SOURCES = dmserver.cpp config.cpp server.cpp block.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 CXXFLAGS = -Wall
 LDFLAGS = -Llib/yaml-cpp/ -lyaml-cpp -Ilib/yaml-cpp/include/

@@ -1,12 +1,28 @@
-#include "config.h"
+#include "server.h"
 #include <iostream>
 #include <cstdlib>
-
-
+#include <signal.h>
 using namespace std;
 
-string config_path = "dmconfig.yml";
+
+string config_path = DEFAULT_CONFIG_PATH;
 string server_id;
+
+void show_usage(int exit_code);
+void parse_args(int argc, char* argv[]);
+void kill_handler(int sig);
+
+int main(int argc, char *argv[]) {
+  parse_args(argc, argv);
+  cout << "server_id: " << server_id << endl;
+  cout << "config_path: " << config_path << endl;
+
+  DM::Server server = DM::Server(config_path, server_id);
+  signal(SIGINT, kill_handler);
+  server.start();
+
+  return 0;
+}
 
 void show_usage(int exit_code) {
   cout << "Usage: dmserver [options] ip:port" << endl;
@@ -39,13 +55,7 @@ void parse_args(int argc, char* argv[]) {
   }
 }
 
-int main(int argc, char *argv[]) {
-  parse_args(argc, argv);
-  cout << "server_id: " << server_id << endl;
-  cout << "config_path: " << config_path << endl;
-
-  DM::Config my_conf = DM::Config( config_path );
-  cout << my_conf;
-
-  return 0;
+void kill_handler(int sig) {
+  cout << "Exiting..." << endl;
+  exit(0);
 }
