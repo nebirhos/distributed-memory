@@ -1,8 +1,7 @@
 #ifndef _DM_BLOCK_H_
 #define _DM_BLOCK_H_
 
-#include "type.h"
-#include <vector>
+#include <dm/type.h>
 #include <string>
 using namespace std;
 
@@ -12,12 +11,23 @@ namespace DM {
 class Block {
 public:
   Block(int id);
+  virtual ~Block() {};
 
-private:
-  int id;
-  unsigned char data[DIMBLOCK];
-  int revision;
-  vector<string> mapped_processes;
+  int size() const;
+  int id() const;
+  int revision() const;
+  void* data() const;
+
+  void revision(int);
+  void data(const void*);
+
+  string dump_hex() const;
+
+protected:
+  static const int M_SIZE = DIMBLOCK;
+  int m_id;
+  int m_revision;
+  unsigned char* m_data;
 };
 
 } // namespace DM
