@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 using namespace std;
 
 
@@ -15,9 +16,11 @@ namespace DM {
 
 struct ServerConf {
   string ip;
-  int port;
+  string port;
   vector<int> blocks_id;
 };
+
+typedef map<string,ServerConf> ServerMap;
 
 enum MessageType {
   MAP    = 1,

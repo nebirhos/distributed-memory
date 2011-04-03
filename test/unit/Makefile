@@ -5,9 +5,10 @@ GTEST_DIR = ../../lib/gtest
 
 # Where to find user code.
 USER_DIR = ../../src
+USER_HEADERS = ../../include
 
 # Flags passed to the preprocessor.
-CPPFLAGS += -I$(GTEST_DIR)/include -I$(USER_DIR) -I$(YAML_DIR)/include
+CPPFLAGS += -I$(GTEST_DIR)/include -I$(USER_DIR) -I$(USER_HEADERS) -I$(YAML_DIR)/include
 
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra

@@ -1,4 +1,4 @@
-#include "config.h"
+#include <dm/config.h>
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>

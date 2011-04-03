@@ -1,8 +1,9 @@
 #ifndef _DM_MESSAGE_H_
 #define _DM_MESSAGE_H_
 
-#include "type.h"
-#include <yaml.h>
+#include <dm/type.h>
+#include "block_server.h"
+#include <yaml-cpp/yaml.h>
 
 
 namespace DM {
