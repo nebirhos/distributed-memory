@@ -38,8 +38,12 @@ ServerConf Config::find(string id) const {
   return servers.find(id)->second;
 }
 
+ServerMap Config::find_all() const {
+  return servers;
+}
+
 ostream& operator<<(ostream& output, const Config& c) {
-  for (Config::ServerHash::const_iterator it = c.servers.begin(); it != c.servers.end(); it++) {
+  for (ServerMap::const_iterator it = c.servers.begin(); it != c.servers.end(); it++) {
     const string server_id = it->first;
     const ServerConf& server = it->second;
     output << "Server " << server_id << endl;
