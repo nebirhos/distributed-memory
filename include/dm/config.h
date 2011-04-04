@@ -24,6 +24,7 @@ public:
   Config(string filename);
   ServerConf find(string id) const;
   ServerMap find_all() const;
+  string find_server_id_by_block_id(int) const;
   /** Output operator <<. Useful for debug */
   friend ostream& operator<<(ostream& output, const Config& c);
 

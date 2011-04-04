@@ -2,6 +2,7 @@
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 using namespace std;
 
 
@@ -40,6 +41,18 @@ ServerConf Config::find(string id) const {
 
 ServerMap Config::find_all() const {
   return servers;
+}
+
+string Config::find_server_id_by_block_id(int block_id) const {
+  string result = "";
+  for (ServerMap::const_iterator sit = servers.begin(); sit != servers.end(); sit++) {
+    const vector<int>& blocks = sit->second.blocks_id;
+    vector<int>::const_iterator bit = std::find( blocks.begin(), blocks.end(), block_id );
+    if ( bit != blocks.end() ) {
+      result = sit->first;
+    }
+  }
+  return result;
 }
 
 ostream& operator<<(ostream& output, const Config& c) {
