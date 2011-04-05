@@ -10,30 +10,29 @@ map<string,MessageType> Message::string_to_type;
 map<MessageType,string> Message::type_to_string;
 
 void Message::maps_initializer() {
-  Message::string_to_type["MAP"]    = MAP;
-  Message::string_to_type["UNMAP"]  = UNMAP;
-  Message::string_to_type["UPDATE"] = UPDATE;
-  Message::string_to_type["WRITE"]  = WRITE;
-  Message::string_to_type["WAIT"]   = WAIT;
-  Message::string_to_type["ACK"]    = ACK;
-  Message::string_to_type["UNDEF"]  = UNDEF;
-
-  Message::type_to_string[MAP]    = "MAP";
-  Message::type_to_string[UNMAP]  = "UNMAP";
-  Message::type_to_string[UPDATE] = "UPDATE";
-  Message::type_to_string[WRITE]  = "WRITE";
-  Message::type_to_string[WAIT]   = "WAIT";
-  Message::type_to_string[ACK]    = "ACK";
-  Message::type_to_string[UNDEF]  = "UNDEF";
+  if (string_to_type.size() == 0) {
+    Message::string_to_type["MAP"]    = MAP;
+    Message::string_to_type["UNMAP"]  = UNMAP;
+    Message::string_to_type["UPDATE"] = UPDATE;
+    Message::string_to_type["WRITE"]  = WRITE;
+    Message::string_to_type["WAIT"]   = WAIT;
+    Message::string_to_type["ACK"]    = ACK;
+    Message::string_to_type["UNDEF"]  = UNDEF;
+  }
+  if (type_to_string.size() == 0) {
+    Message::type_to_string[MAP]    = "MAP";
+    Message::type_to_string[UNMAP]  = "UNMAP";
+    Message::type_to_string[UPDATE] = "UPDATE";
+    Message::type_to_string[WRITE]  = "WRITE";
+    Message::type_to_string[WAIT]   = "WAIT";
+    Message::type_to_string[ACK]    = "ACK";
+    Message::type_to_string[UNDEF]  = "UNDEF";
+  }
 }
 
 Message::Message(string message)
   : m_block(NULL) {
-  static bool maps_init = false;
-  if (!maps_init) {
-    maps_initializer();
-    maps_init = true;
-  }
+  maps_initializer();
   if (!message.empty())
     parse(message);
 }
@@ -97,6 +96,7 @@ const Block* Message::block() {
 }
 
 string Message::emit(MessageType type) {
+  maps_initializer();
   YAML::Emitter emt;
   emt << YAML::Flow;            // short YAML syntax - aka JSON
   emt << YAML::BeginMap;
@@ -106,6 +106,7 @@ string Message::emit(MessageType type) {
 }
 
 string Message::emit(MessageType type, const Block& block, bool shallow) {
+  maps_initializer();
   YAML::Emitter emt;
   emt << YAML::Flow;
   emt << YAML::BeginMap;

@@ -22,11 +22,10 @@ public:
 private:
   YAML::Node node;
   Block* m_block;
-  // Static members to save memory
+
   static map<string,MessageType> string_to_type;
   static map<MessageType,string> type_to_string;
   static void maps_initializer();
-  static bool maps_init;
 };
 
 } // namespace DM
