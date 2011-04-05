@@ -17,7 +17,7 @@ public:
   const Block* block();
 
   static string emit(MessageType);
-  static string emit(MessageType, const Block&);
+  static string emit(MessageType, const Block&, bool shallow = false);
 
 private:
   YAML::Node node;
@@ -28,8 +28,6 @@ private:
   static void maps_initializer();
   static bool maps_init;
 };
-
-YAML::Emitter& operator<<(YAML::Emitter& out, const Block& b);
 
 } // namespace DM
 

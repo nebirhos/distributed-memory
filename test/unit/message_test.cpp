@@ -51,3 +51,11 @@ TEST(DM_Message, emit_block) {
   EXPECT_EQ( block_rev, p.block()->revision() );
   EXPECT_STREQ( block_data, (const char*) p.block()->data() );
 }
+
+TEST(DM_Message, emit_block_force_shallow) {
+  DM::BlockServer block(1);
+  block.data("foo bar");
+
+  EXPECT_STREQ( "{type: MAP, block: {id: 1, revision: 0}}",
+                DM::Message::emit(DM::MAP, block, true).c_str() );
+}

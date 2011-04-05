@@ -72,7 +72,7 @@ const Block* Message::block() {
       int revision;
       // revision key optional
       if ( const YAML::Node* nrev = node["block"].FindValue("revision") ) {
-        *nrev >> revision;
+        revision = *nrev;
       }
       // data key optional
       if ( const YAML::Node* ndata = node["block"].FindValue("data") ) {
@@ -105,27 +105,24 @@ string Message::emit(MessageType type) {
   return emt.c_str();
 }
 
-string Message::emit(MessageType type, const Block& block) {
+string Message::emit(MessageType type, const Block& block, bool shallow) {
   YAML::Emitter emt;
   emt << YAML::Flow;
   emt << YAML::BeginMap;
   emt << YAML::Key << "type" << YAML::Value << type_to_string[type];
-  emt << YAML::Key << "block" << YAML::Value << block;
+  emt << YAML::Key << "block" << YAML::Value;
+
+  emt << YAML::BeginMap;
+  emt << YAML::Key << "id" << YAML::Value << block.id();
+  emt << YAML::Key << "revision" << YAML::Value << block.revision();
+  // not shallow block
+  if ( !shallow && block.data() != NULL ) {
+    emt << YAML::Key << "data" << YAML::Value << YAML::Binary((char*) block.data(), block.size());
+  }
+  emt << YAML::EndMap;
+
   emt << YAML::EndMap;
   return emt.c_str();
-}
-
-YAML::Emitter& operator<<(YAML::Emitter& out, const Block& b) {
-  out << YAML::Flow;
-  out << YAML::BeginMap;
-  out << YAML::Key << "id" << YAML::Value << b.id();
-  out << YAML::Key << "revision" << YAML::Value << b.revision();
-  // not shallow block
-  if (b.data() != NULL) {
-    out << YAML::Key << "data" << YAML::Value << YAML::Binary((char*) b.data(), b.size());
-  }
-  out << YAML::EndMap;
-  return out;
 }
 
 } // namespace DM
