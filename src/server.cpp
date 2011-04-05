@@ -110,6 +110,7 @@ void Server::client_handler(int socket_d) {
       switch ( msg.type() ) {
       case MAP:
         block_id = msg.block()->id();
+        cout << "block_id: " << block_id << endl; // FIXME
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.map(client_id);
@@ -126,13 +127,16 @@ void Server::client_handler(int socket_d) {
 
       case UNMAP:
         block_id = msg.block()->id();
-        cout << "block_id: " << block_id << endl;
+        cout << "block_id: " << block_id << endl; // FIXME
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.unmap(client_id);
           ack = Message::emit(ACK) + Message::STOP;
-          send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         }
+        else {
+          ack = Message::emit(NACK) + Message::STOP;
+        }
+        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       case UPDATE:
       //   Block& b = blocks.find(msg.block());
