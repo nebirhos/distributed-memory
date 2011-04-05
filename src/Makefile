@@ -24,7 +24,10 @@ $(BIN): $(OBJECTS)
 $(LIBRARY): $(OBJECTS)
 	$(AR) -cq $(LIBRARY) client.o \
                        config.o \
+                       message.o \
+                       base64.o \
                        block.o \
+                       block_server.o \
                        block_local.o ../lib/yaml-cpp/src/*.o
 
 .cpp.o:

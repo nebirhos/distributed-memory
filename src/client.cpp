@@ -1,3 +1,4 @@
+#include "message.h"
 #include <dm/client.h>
 #include <dm/type.h>
 #include <sys/types.h>
@@ -19,13 +20,38 @@ void Client::dm_init(char* config_file) {
   for (it = servers.begin(); it != servers.end(); ++it) {
     server_sockets[it->first] = open_socket(it->second.ip, it->second.port);
   }
+}
 
-  write( server_sockets["127.0.0.1:4567"], "FIXME", 5);
+int Client::dm_block_map(int id, void* address) {
+  string server_id = config.find_server_id_by_block_id(id);
+  if ( server_id.empty() )
+    return -1;
+  // block already mapped
+  if ( blocks.find(id) != blocks.end() )
+    return -2;
+
+  BlockLocal block(id, address);
+  block.map(server_id);
+  blocks.insert( pair<int,BlockLocal>(id,block) );
+
+  int sockfd = server_sockets[server_id];
+  if (sockfd < 0)
+    return -3;
+
+  string req = Message::emit(MAP, block, true) + Message::STOP;
+  send_socket(sockfd, req);
+
+  req = receive_socket(sockfd);
+  Message ack( req );
+  if (ack.type() == NACK)
+    return -4;
+
+  blocks[id] = *( ack.block() );
+  return 0;
 }
 
 int Client::open_socket(string ip, string port) {
-  cout << "Connetto a " << ip << ":" << port << endl;
-
+  cout << "Connetto a " << ip << ":" << port << endl; // FIXME
   addrinfo hints = {0};
   addrinfo *server_addrinfo, *p;
   int sockfd;
@@ -34,12 +60,12 @@ int Client::open_socket(string ip, string port) {
   getaddrinfo( ip.c_str(), port.c_str(), &hints, &server_addrinfo );
   for (p = server_addrinfo; p != NULL; p = p->ai_next) {
     if ((sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
-      cout << "errore socket" << endl;
+      cout << "errore socket" << endl; // FIXME
       continue;
     }
     if (connect( sockfd, p->ai_addr, p->ai_addrlen ) < 0) {
       close(sockfd);
-      cout << "errore connect" << endl;
+      cout << "errore connect" << endl; // FIXME
       continue;
     }
     break;
@@ -49,6 +75,23 @@ int Client::open_socket(string ip, string port) {
   }
   freeaddrinfo(server_addrinfo);
   return sockfd;
+}
+
+int Client::send_socket(int sockfd, string message) {
+  return send( sockfd, (void*) message.c_str(), message.size(), 0 );
+}
+
+string Client::receive_socket(int sockfd) {
+  char buffer[TCP_BUFFER_SIZE];
+  string message;
+  int size, token_stop;
+  do {
+    size = recv( sockfd, (void*) buffer, TCP_BUFFER_SIZE-1, 0 );
+    buffer[size] = 0;
+    message += buffer;
+    token_stop = message.find( Message::STOP );
+  } while ( (size != 0) && (token_stop == string::npos) );
+  return message;
 }
 
 } // namespace DM

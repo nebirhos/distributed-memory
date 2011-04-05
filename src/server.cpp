@@ -20,11 +20,11 @@ Server::Server(string config_path, string id)
   const vector<int>& blocks_id = config.find(id).blocks_id;
   for (unsigned int i = 0; i < blocks_id.size(); ++i) {
     BlockServer b( blocks_id[i] );
-    blocks[ blocks_id[i] ] = b;
+    blocks.insert( pair<int,BlockServer>(blocks_id[i], b) );
     cout << "b.id(): " << b.id() << endl; // FIXME
     cout << "b.revision(): " << b.revision() << endl; // FIXME
     cout << "b.data(): " << b.data() << endl; // FIXME
-    cout << blocks[blocks_id[i]].dump_hex(); // FIXME
+    cout << blocks[ blocks_id[i] ].dump_hex(); // FIXME
   }
 }
 
@@ -91,7 +91,6 @@ void* Server::client_handler_wrapper(void* args) {
 
 void Server::client_handler(int socket_d) {
   pthread_detach( pthread_self() );
-  // cout << "get_client_id(socket_d): " << get_client_id(socket_d) << endl;
   string client_id = get_client_id(socket_d);
   char buffer[TCP_BUFFER_SIZE];
   string message;
@@ -111,15 +110,20 @@ void Server::client_handler(int socket_d) {
       switch ( msg.type() ) {
       case MAP:
         block_id = msg.block()->id();
-        cout << "block_id: " << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.map(client_id);
+          cout << "it->second.dump_hex(): " << it->second.dump_hex() << endl; // FIXME
           ack = Message::emit(ACK, it->second) + Message::STOP;
-          cout << "ack.size(): " << ack.size() << endl;
-          send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         }
+        else {
+          ack = Message::emit(NACK) + Message::STOP;
+        }
+        cout << "ack.size(): " << ack.size() << endl; // FIXME
+        cout << "ack: " << ack << endl; // FIXME
+        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
+
       case UNMAP:
         block_id = msg.block()->id();
         cout << "block_id: " << block_id << endl;
