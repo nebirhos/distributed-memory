@@ -22,6 +22,7 @@ public:
   void revision(int);
   void data(const void*);
 
+  void add_revision();
   string dump_hex() const;
 
 protected:

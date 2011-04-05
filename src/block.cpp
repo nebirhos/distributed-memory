@@ -45,6 +45,10 @@ void Block::data(const void* data) {
   memcpy(m_data, data, M_SIZE);
 }
 
+void Block::add_revision() {
+  m_revision++;
+}
+
 string Block::dump_hex() const {
   ostringstream out;
   int bytes_per_row = 16;

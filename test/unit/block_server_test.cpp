@@ -77,3 +77,11 @@ TEST(DM_BlockServer, unmap) {
   EXPECT_EQ( true , b.is_client_mapped(client_id2) );
   EXPECT_NE( true , b.is_client_mapped(client_id1) );
 }
+
+TEST(DM_BlockServer, revision) {
+  DM::BlockServer b;
+
+  EXPECT_EQ( 0, b.revision() );
+  b.add_revision();
+  EXPECT_EQ( 1, b.revision() );
+}
