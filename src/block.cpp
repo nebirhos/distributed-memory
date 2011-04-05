@@ -11,6 +11,16 @@ namespace DM {
 Block::Block(int id)
   : m_id(id), m_revision(0), m_data(NULL) {}
 
+Block& Block::operator=(const Block &b) {
+  if (this == &b)
+    return *this;
+
+  m_id = b.m_id;
+  m_revision = b.m_revision;
+  memcpy(m_data, b.m_data, M_SIZE);
+  return *this;
+}
+
 int Block::size() const {
   return M_SIZE;
 }

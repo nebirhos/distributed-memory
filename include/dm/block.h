@@ -12,6 +12,7 @@ class Block {
 public:
   Block(int id);
   virtual ~Block() {};
+  Block& operator=(const Block&);
 
   int size() const;
   int id() const;

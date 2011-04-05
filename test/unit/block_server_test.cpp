@@ -39,6 +39,23 @@ TEST(DM_BlockServer, setter) {
   delete[] data;
 }
 
+TEST(DM_BlockServer, assignment) {
+  DM::BlockServer b1(123);
+  DM::BlockServer b2;
+  unsigned char* data = new unsigned char[b1.size()];
+  memset(data, 0xFF, b1.size());
+  b2 = b1;
+
+  EXPECT_EQ( b1.id(), b2.id() );
+  EXPECT_EQ( b1.revision(), b2.revision() );
+  EXPECT_NE( b1.data(), b2.data() );
+  for (int i = 0; i < b1.size(); ++i) {
+    ASSERT_EQ( ((unsigned char*) b1.data())[i],
+               ((unsigned char*) b2.data())[i] );
+  }
+  delete[] data;
+}
+
 TEST(DM_BlockServer, map) {
   DM::BlockServer b;
   string client_id = "1.2.3.4:5678";
