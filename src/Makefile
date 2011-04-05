@@ -7,6 +7,7 @@ SOURCES = dmserver.cpp \
           server.cpp \
           block.cpp \
           block_server.cpp \
+          block_local.cpp \
           message.cpp \
           base64.cpp \
           client.cpp
@@ -21,7 +22,10 @@ $(BIN): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(LDFLAGS) -o $(BIN)
 
 $(LIBRARY): $(OBJECTS)
-	$(AR) -cq $(LIBRARY) client.o config.o ../lib/yaml-cpp/src/*.o
+	$(AR) -cq $(LIBRARY) client.o \
+                       config.o \
+                       block.o \
+                       block_local.o ../lib/yaml-cpp/src/*.o
 
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@

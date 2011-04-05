@@ -1,7 +1,7 @@
 #ifndef _DM_BLOCK_SERVER_H_
 #define _DM_BLOCK_SERVER_H_
 
-#include "block.h"
+#include <dm/block.h>
 #include <vector>
 using namespace std;
 

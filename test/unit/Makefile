@@ -17,10 +17,12 @@ CXXFLAGS += -g -Wall -Wextra
 # created to the list.
 TESTS = message_test \
         block_server_test \
+        block_local_test \
         config_test
 
 SOURCES = message_test.cpp \
           block_server_test.cpp \
+          block_local_test.cpp \
           config_test.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -51,6 +53,11 @@ message_test : message_test.o
 
 block_server_test : block_server_test.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(USER_DIR)/block_server.o \
+                                 $(USER_DIR)/block.o \
+                                 $^ $(LDFLAGS) -o $@
+
+block_local_test : block_local_test.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(USER_DIR)/block_local.o \
                                  $(USER_DIR)/block.o \
                                  $^ $(LDFLAGS) -o $@
 
