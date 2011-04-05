@@ -42,7 +42,7 @@ void Block::revision(int rev) {
 }
 
 void Block::data(const void* data) {
-  m_data = (unsigned char*) data;
+  memcpy(m_data, data, M_SIZE);
 }
 
 string Block::dump_hex() const {

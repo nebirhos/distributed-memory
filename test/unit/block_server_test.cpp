@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <block_server.h>
+#include <dm/block_server.h>
 #include <cstring>
 
 TEST(DM_BlockServer, constructor) {
@@ -31,12 +31,12 @@ TEST(DM_BlockServer, setter) {
   unsigned char* data = new unsigned char[b.size()];
   memset(data, 0xFF, b.size());
   b.data(data);
+  delete[] data;
 
   EXPECT_EQ( 10, b.revision() );
   for (int i = 0; i < b.size(); ++i) {
     ASSERT_EQ( 0xFF, ((unsigned char*) b.data())[i] );
   }
-  delete[] data;
 }
 
 TEST(DM_BlockServer, assignment) {
@@ -44,8 +44,10 @@ TEST(DM_BlockServer, assignment) {
   DM::BlockServer b2;
   unsigned char* data = new unsigned char[b1.size()];
   memset(data, 0xFF, b1.size());
-  b2 = b1;
+  b1.data(data);
+  delete[] data;
 
+  b2 = b1;
   EXPECT_EQ( b1.id(), b2.id() );
   EXPECT_EQ( b1.revision(), b2.revision() );
   EXPECT_NE( b1.data(), b2.data() );
@@ -53,7 +55,6 @@ TEST(DM_BlockServer, assignment) {
     ASSERT_EQ( ((unsigned char*) b1.data())[i],
                ((unsigned char*) b2.data())[i] );
   }
-  delete[] data;
 }
 
 TEST(DM_BlockServer, map) {

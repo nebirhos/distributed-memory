@@ -1,7 +1,7 @@
 #ifndef _DM_BLOCK_SERVER_H_
 #define _DM_BLOCK_SERVER_H_
 
-#include <dm/block.h>
+#include "block.h"
 #include <vector>
 using namespace std;
 
@@ -12,10 +12,8 @@ class BlockServer : public Block {
 public:
   BlockServer(int id = 0);
   ~BlockServer();
-  BlockServer(const BlockServer& b);
+  BlockServer(const BlockServer &);
 
-  using Block::data;            // brings all data() overloads into this scope
-  void data(const void*);       // override Block.data()
   int map(string client_id);
   int unmap(string client_id);
   bool is_client_mapped(string client_id);

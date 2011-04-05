@@ -2,7 +2,7 @@
 #define _DM_SERVER_H_
 
 #include <dm/config.h>
-#include "block_server.h"
+#include <dm/block_server.h>
 
 
 namespace DM {

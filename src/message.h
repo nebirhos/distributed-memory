@@ -2,7 +2,7 @@
 #define _DM_MESSAGE_H_
 
 #include <dm/type.h>
-#include "block_server.h"
+#include <dm/block_server.h>
 #include <yaml-cpp/yaml.h>
 
 

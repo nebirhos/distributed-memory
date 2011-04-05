@@ -12,7 +12,7 @@ class Block {
 public:
   Block(int id);
   virtual ~Block() {};
-  Block& operator=(const Block&);
+  Block& operator=(const Block &);
 
   int size() const;
   int id() const;
@@ -20,7 +20,7 @@ public:
   void* data() const;
 
   void revision(int);
-  virtual void data(const void*);
+  void data(const void*);
 
   string dump_hex() const;
 

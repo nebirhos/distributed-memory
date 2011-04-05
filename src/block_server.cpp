@@ -1,4 +1,4 @@
-#include "block_server.h"
+#include <dm/block_server.h>
 #include <iostream>
 #include <cstring>
 #include <algorithm>
@@ -20,10 +20,6 @@ BlockServer::BlockServer(const BlockServer& b)
   : Block(b.m_id) {
   m_data = new unsigned char[M_SIZE];
   memcpy(m_data, b.m_data, M_SIZE);
-}
-
-void BlockServer::data(const void* data) {
-  memcpy(m_data, data, M_SIZE);
 }
 
 int BlockServer::map(string client_id) {

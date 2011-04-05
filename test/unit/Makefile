@@ -58,6 +58,7 @@ block_server_test : block_server_test.o
 
 block_local_test : block_local_test.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(USER_DIR)/block_local.o \
+                                 $(USER_DIR)/block_server.o \
                                  $(USER_DIR)/block.o \
                                  $^ $(LDFLAGS) -o $@
 
