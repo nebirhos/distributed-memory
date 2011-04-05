@@ -9,7 +9,7 @@ using namespace std;
 namespace DM {
 
 Block::Block(int id)
-  : m_id(id), m_revision(0) {}
+  : m_id(id), m_revision(0), m_data(NULL) {}
 
 int Block::size() const {
   return M_SIZE;

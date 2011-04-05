@@ -27,16 +27,27 @@ TEST(DM_Message, emit) {
   EXPECT_STREQ( "{type: ACK}", DM::Message::emit(DM::ACK).c_str() );
 }
 
-TEST(DM_Message, emit_and_parse) {
-  const char block_data[128] = "foo bar";
-  const int block_id = 123;
-  const DM::MessageType msg_type = DM::MAP;
+TEST(DM_Message, emit_shallow_block) {
+  DM::Block block(1);
+  block.revision(123);
+  EXPECT_STREQ( "{type: MAP, block: {id: 1, revision: 123}}",
+                DM::Message::emit(DM::MAP, block).c_str() );
+}
+
+TEST(DM_Message, emit_block) {
+  char block_data[128] = "foo bar";
+  int block_id = 1;
+  int block_rev = 123;
+  DM::MessageType msg_type = DM::MAP;
+
   DM::BlockServer block(block_id);
+  block.revision(block_rev);
   block.data(block_data);
   string emitted = DM::Message::emit(msg_type, block);
 
   DM::Message p(emitted);
   EXPECT_EQ( msg_type, p.type() );
   EXPECT_EQ( block_id, p.block()->id() );
+  EXPECT_EQ( block_rev, p.block()->revision() );
   EXPECT_STREQ( block_data, (const char*) p.block()->data() );
 }

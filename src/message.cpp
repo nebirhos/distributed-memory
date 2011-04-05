@@ -69,14 +69,24 @@ const Block* Message::block() {
   try {
     if (m_block == NULL) {
       int block_id = node["block"]["id"];
-      m_block = new BlockServer( block_id );
-      m_block->revision( node["block"]["revision"] );
-
-      string block_data = node["block"]["data"];
-      char* buffer = new char[m_block->size()];
-      base64::decode( block_data.c_str(), block_data.size(), buffer, m_block->size()+1 );
-      m_block->data( buffer );
-      delete[] buffer;
+      int revision;
+      // revision key optional
+      if ( const YAML::Node* nrev = node["block"].FindValue("revision") ) {
+        *nrev >> revision;
+      }
+      // data key optional
+      if ( const YAML::Node* ndata = node["block"].FindValue("data") ) {
+        m_block = new BlockServer( block_id );
+        string block_data = *ndata;
+        char* buffer = new char[m_block->size()];
+        base64::decode( block_data.c_str(), block_data.size(), buffer, m_block->size()+1 );
+        m_block->data( buffer );
+        delete[] buffer;
+      }
+      else {
+        m_block = new Block( block_id );
+      }
+      m_block->revision( revision );
     }
   }
   catch(YAML::Exception& e) {
@@ -110,7 +120,10 @@ YAML::Emitter& operator<<(YAML::Emitter& out, const Block& b) {
   out << YAML::BeginMap;
   out << YAML::Key << "id" << YAML::Value << b.id();
   out << YAML::Key << "revision" << YAML::Value << b.revision();
-  out << YAML::Key << "data" << YAML::Value << YAML::Binary((char*) b.data(), b.size());
+  // not shallow block
+  if (b.data() != NULL) {
+    out << YAML::Key << "data" << YAML::Value << YAML::Binary((char*) b.data(), b.size());
+  }
   out << YAML::EndMap;
   return out;
 }
