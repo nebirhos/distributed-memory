@@ -14,6 +14,8 @@ public:
   ~BlockServer();
   BlockServer(const BlockServer& b);
 
+  using Block::data;            // brings all data() overloads into this scope
+  void data(const void*);       // override Block.data()
   int map(string client_id);
   int unmap(string client_id);
   bool is_client_mapped(string client_id);

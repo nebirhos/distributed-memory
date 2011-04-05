@@ -8,6 +8,15 @@ TEST(DM_BlockLocal, constructor) {
   EXPECT_EQ( NULL, (int) b.data() );
 }
 
+TEST(DM_BlockLocal, setter) {
+  DM::BlockLocal b(10);
+  b.revision(20);
+  b.data(&b);
+  EXPECT_EQ( 10, b.id() );
+  EXPECT_EQ( 20, b.revision() );
+  EXPECT_EQ( (void*) &b, (void*) b.data() );
+}
+
 TEST(DM_BlockLocal, valid) {
   DM::BlockLocal b(123);
   EXPECT_EQ( true, b.valid() );

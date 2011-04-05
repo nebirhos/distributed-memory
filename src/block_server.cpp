@@ -22,6 +22,10 @@ BlockServer::BlockServer(const BlockServer& b)
   memcpy(m_data, b.m_data, M_SIZE);
 }
 
+void BlockServer::data(const void* data) {
+  memcpy(m_data, data, M_SIZE);
+}
+
 int BlockServer::map(string client_id) {
   if (!is_client_mapped(client_id)) {
     mapped_clients.push_back(client_id);

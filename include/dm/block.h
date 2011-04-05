@@ -19,7 +19,7 @@ public:
   void* data() const;
 
   void revision(int);
-  void data(const void*);
+  virtual void data(const void*);
 
   string dump_hex() const;
 
