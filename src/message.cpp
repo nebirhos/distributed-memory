@@ -19,6 +19,7 @@ void Message::maps_initializer() {
     Message::string_to_type["WRITE"]  = WRITE;
     Message::string_to_type["WAIT"]   = WAIT;
     Message::string_to_type["ACK"]    = ACK;
+    Message::string_to_type["NACK"]   = NACK;
     Message::string_to_type["UNDEF"]  = UNDEF;
   }
   if (type_to_string.size() == 0) {
@@ -28,6 +29,7 @@ void Message::maps_initializer() {
     Message::type_to_string[WRITE]  = "WRITE";
     Message::type_to_string[WAIT]   = "WAIT";
     Message::type_to_string[ACK]    = "ACK";
+    Message::type_to_string[NACK]   = "NACK";
     Message::type_to_string[UNDEF]  = "UNDEF";
   }
 }

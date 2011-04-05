@@ -20,6 +20,7 @@ TEST(DM_Message, parse_type) {
   EXPECT_EQ( DM::WRITE, p.parse("{type: WRITE}").type() );
   EXPECT_EQ( DM::WAIT, p.parse("{type: WAIT}").type() );
   EXPECT_EQ( DM::ACK, p.parse("{type: ACK}").type() );
+  EXPECT_EQ( DM::NACK, p.parse("{type: NACK}").type() );
 }
 
 // Emitting

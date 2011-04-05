@@ -29,6 +29,7 @@ enum MessageType {
   WRITE  = 4,
   WAIT   = 5,
   ACK    = 6,
+  NACK   = 7,
   UNDEF  = -1
 };
 
