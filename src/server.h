@@ -4,8 +4,6 @@
 #include <dm/config.h>
 #include "block_server.h"
 
-#define STOP_REQ "\r\n\r\n"     // FIXME! "\n\n" OR "\r\r"
-
 
 namespace DM {
 

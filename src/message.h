@@ -16,6 +16,7 @@ public:
   MessageType type();
   const Block* block();
 
+  static const string STOP;     // token to mark end of message
   static string emit(MessageType);
   static string emit(MessageType, const Block&, bool shallow = false);
 

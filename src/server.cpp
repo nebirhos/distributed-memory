@@ -101,7 +101,7 @@ void Server::client_handler(int socket_d) {
     buffer[size] = 0;
     message += buffer;
 
-    size_t token_stop = message.find(STOP_REQ);
+    size_t token_stop = message.find( Message::STOP );
     if (token_stop != string::npos) {
       Message msg(message);
       int block_id;
@@ -115,7 +115,7 @@ void Server::client_handler(int socket_d) {
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.map(client_id);
-          ack = Message::emit(ACK, it->second);
+          ack = Message::emit(ACK, it->second) + Message::STOP;
           cout << "ack.size(): " << ack.size() << endl;
           send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         }
@@ -126,7 +126,7 @@ void Server::client_handler(int socket_d) {
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.unmap(client_id);
-          ack = Message::emit(ACK);
+          ack = Message::emit(ACK) + Message::STOP;
           send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         }
         break;

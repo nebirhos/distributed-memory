@@ -6,6 +6,8 @@
 
 namespace DM {
 
+const string Message::STOP = "\r\n\r\n";
+
 map<string,MessageType> Message::string_to_type;
 map<MessageType,string> Message::type_to_string;
 
