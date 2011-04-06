@@ -10,6 +10,7 @@ SOURCES = dmserver.cpp \
           block_local.cpp \
           message.cpp \
           base64.cpp \
+          logger.cpp \
           client.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 CPPFLAGS += -I../lib/yaml-cpp/include/ -I../include/
@@ -26,6 +27,7 @@ $(LIBRARY): $(OBJECTS)
                        config.o \
                        message.o \
                        base64.o \
+                       logger.o \
                        block.o \
                        block_server.o \
                        block_local.o ../lib/yaml-cpp/src/*.o

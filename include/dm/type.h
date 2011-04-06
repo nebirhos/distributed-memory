@@ -5,6 +5,7 @@
 #define DEFAULT_CONFIG_PATH "dmconfig.yml"
 #define TCP_MAX_CONNECTIONS 64
 #define TCP_BUFFER_SIZE 1024
+#define LOG_LEVEL LOG_DEBUG
 
 #include <string>
 #include <vector>
@@ -31,6 +32,12 @@ enum MessageType {
   ACK    = 6,
   NACK   = 7,
   UNDEF  = -1
+};
+
+enum LogLevel {
+  LOG_DEBUG,
+  LOG_INFO,
+  LOG_ERROR
 };
 
 } // namespace DM
