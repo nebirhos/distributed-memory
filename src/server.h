@@ -3,6 +3,7 @@
 
 #include <dm/config.h>
 #include <dm/block_server.h>
+#include <pthread.h>
 
 
 namespace DM {
@@ -18,11 +19,12 @@ private:
   const string id;
   map<int,BlockServer> blocks;
   int listen_socket;
+  pthread_mutex_t mutex;
 
   int open_socket();
   /**
    * Cause pthread expects a C-style function, we use this static method
-   * to call the member method of the Server object
+   * to call the member method of the Server object. Maybe exter "C" is better
    */
   struct HandlerWrapperArgs {
     Server* obj;

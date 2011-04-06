@@ -6,7 +6,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>  // inet_ntop
 #include <iostream>
-#include <pthread.h>
 #include <sstream>
 #include <cstring>
 using namespace std;
@@ -26,6 +25,7 @@ Server::Server(string config_path, string id)
     cout << "b.data(): " << b.data() << endl; // FIXME
     cout << blocks[ blocks_id[i] ].dump_hex(); // FIXME
   }
+  pthread_mutex_init(&mutex, 0);
 }
 
 void Server::start() {
@@ -111,6 +111,7 @@ void Server::client_handler(int socket_d) {
       case MAP:
         block_id = msg.block()->id();
         cout << "block_id: " << block_id << endl; // FIXME
+        pthread_mutex_lock( &mutex );
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.map(client_id);
@@ -122,12 +123,14 @@ void Server::client_handler(int socket_d) {
         }
         cout << "ack.size(): " << ack.size() << endl; // FIXME
         cout << "ack: " << ack << endl; // FIXME
+        pthread_mutex_unlock( &mutex );
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
 
       case UNMAP:
         block_id = msg.block()->id();
         cout << "block_id: " << block_id << endl; // FIXME
+        pthread_mutex_lock( &mutex );
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.unmap(client_id);
@@ -136,6 +139,7 @@ void Server::client_handler(int socket_d) {
         else {
           ack = Message::emit(NACK) + Message::STOP;
         }
+        pthread_mutex_unlock( &mutex );
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       case UPDATE:
@@ -151,8 +155,9 @@ void Server::client_handler(int socket_d) {
       case WRITE:
         block_id = msg.block()->id();
         cout << "block_id: " << block_id << endl; // FIXME
-        it = blocks.find(block_id);
         ack = Message::emit(NACK) + Message::STOP;
+        pthread_mutex_lock( &mutex );
+        it = blocks.find(block_id);
         if (it != blocks.end()) {
           if ( it->second.revision() == msg.block()->revision() ) {
             it->second = *((BlockServer*)  msg.block());
@@ -163,6 +168,7 @@ void Server::client_handler(int socket_d) {
             cout << "it->second.data(): " << (char*) it->second.data() << endl; // FIXME
           }
         }
+        pthread_mutex_unlock( &mutex );
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       default:
