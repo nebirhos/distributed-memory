@@ -148,6 +148,27 @@ void Server::client_handler(int socket_d) {
       //   }
       //   send(ack);
         break;
+      case WRITE:
+        block_id = msg.block()->id();
+        cout << "block_id: " << block_id << endl; // FIXME
+        it = blocks.find(block_id);
+        ack = Message::emit(NACK) + Message::STOP;
+        if (it != blocks.end()) {
+          if ( it->second.revision() == msg.block()->revision() ) {
+            it->second = *((BlockServer*)  msg.block());
+            it->second.add_revision();
+            ack = Message::emit(ACK) + Message::STOP;
+            cout << "it->second.revision(): " << it->second.revision() << endl; // FIXME
+            cout << "it->second.dump_hex(): " << it->second.dump_hex() << endl; // FIXME
+            cout << "it->second.data(): " << (char*) it->second.data() << endl; // FIXME
+          }
+        }
+        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
+        break;
+      default:
+        ack = Message::emit(NACK) + Message::STOP;
+        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
+        break;
       }
       message.clear();
     }

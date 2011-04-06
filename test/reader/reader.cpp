@@ -1,4 +1,5 @@
 #include <dm/client.h>
+#include <cstring>
 using namespace DM;
 
 
@@ -10,7 +11,10 @@ int main(int argc, char *argv[]) {
   char* test2 = new char[DIMBLOCK];
   client.dm_block_map( 1, test1 );
   client.dm_block_map( 2, test2 );
-  cout << "test1: " << test1 << endl;
+
+  memcpy( test1, "FOXY TEST", 9 );
+  client.dm_block_write( 1 );
+
   client.dm_block_unmap( 1 );
   client.dm_block_unmap( 2 );
 
