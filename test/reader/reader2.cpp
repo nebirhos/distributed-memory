@@ -10,13 +10,13 @@ int main(int argc, char *argv[]) {
   char* test1 = new char[DIMBLOCK];
   char* test2 = new char[DIMBLOCK];
   client.dm_block_map( 1, test1 );
-  client.dm_block_map( 2, test2 );
+  client.dm_block_map( 3, test2 );
 
-  memcpy( test1, "FOXY TEST", 9 );
-  client.dm_block_write( 1 );
+  client.dm_block_wait( 3 );
+  cout << "invalid block!: " << endl; // FIXME
 
   client.dm_block_unmap( 1 );
-  client.dm_block_unmap( 2 );
+  client.dm_block_unmap( 3 );
 
   return 0;
 }

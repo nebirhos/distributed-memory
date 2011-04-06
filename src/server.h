@@ -20,6 +20,7 @@ private:
   map<int,BlockServer> blocks;
   int listen_socket;
   pthread_mutex_t mutex;
+  map<int,pthread_cond_t> blocks_wait;
 
   int open_socket();
   /**

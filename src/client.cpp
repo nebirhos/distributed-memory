@@ -106,6 +106,36 @@ int Client::dm_block_write(int id) {
   return 0;
 }
 
+int Client::dm_block_wait(int id) {
+  string server_id = config.find_server_id_by_block_id(id);
+  if ( server_id.empty() )
+    return -1;
+  map<int,BlockLocal>::iterator it = blocks.find(id);
+  // block not mapped
+  if ( it == blocks.end() )
+    return -2;
+
+  int sockfd = server_sockets[server_id];
+  if (sockfd < 0)
+    return -3;
+
+  BlockLocal& block = it->second;
+  if ( !block.valid() )
+    return 0;
+
+  string req = Message::emit(WAIT, block, true) + Message::STOP;
+  send_socket(sockfd, req);
+
+  req = receive_socket(sockfd);
+  Message ack( req );
+  if (ack.type() != ACK) {
+    return -5;
+  }
+
+  block.valid(false);
+  return 0;
+}
+
 
 int Client::open_socket(string ip, string port) {
   cout << "Connetto a " << ip << ":" << port << endl; // FIXME

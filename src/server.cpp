@@ -20,6 +20,7 @@ Server::Server(string config_path, string id)
   for (unsigned int i = 0; i < blocks_id.size(); ++i) {
     BlockServer b( blocks_id[i] );
     blocks.insert( pair<int,BlockServer>(blocks_id[i], b) );
+    pthread_cond_init( &blocks_wait[blocks_id[i]], 0 );
     cout << "b.id(): " << b.id() << endl; // FIXME
     cout << "b.revision(): " << b.revision() << endl; // FIXME
     cout << "b.data(): " << b.data() << endl; // FIXME
@@ -166,6 +167,23 @@ void Server::client_handler(int socket_d) {
             cout << "it->second.revision(): " << it->second.revision() << endl; // FIXME
             cout << "it->second.dump_hex(): " << it->second.dump_hex() << endl; // FIXME
             cout << "it->second.data(): " << (char*) it->second.data() << endl; // FIXME
+          }
+        }
+        pthread_cond_broadcast( &blocks_wait[block_id] );
+        pthread_mutex_unlock( &mutex );
+        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
+        break;
+      case WAIT:
+        block_id = msg.block()->id();
+        cout << "block_id: " << block_id << endl; // FIXME
+        ack = Message::emit(ACK) + Message::STOP;
+        pthread_mutex_lock( &mutex );
+        it = blocks.find(block_id);
+        if (it != blocks.end()) {
+          while ( it->second.revision() == msg.block()->revision() ) {
+            cout << "waitin for block changes..." << endl; // FIXME
+            pthread_cond_wait( &blocks_wait[block_id], &mutex );
+            cout << "now is changed!" << endl; // FIXME
           }
         }
         pthread_mutex_unlock( &mutex );

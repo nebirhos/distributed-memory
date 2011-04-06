@@ -1,6 +1,6 @@
 CXX = g++
-BIN = reader
-SOURCES = reader.cpp
+BIN = reader1 reader2
+SOURCES = reader1.cpp reader2.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 CPPFLAGS += -I../../include/
 CXXFLAGS += -Wall -Wextra
@@ -9,7 +9,7 @@ LDFLAGS += -L../../bin/ -ldm -lpthread
 all: $(BIN)
 
 $(BIN): $(OBJECTS)
-	$(CXX) $(OBJECTS) $(LDFLAGS) -o $(BIN)
+	$(CXX) $(@).o $(LDFLAGS) -o $(@)
 
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
