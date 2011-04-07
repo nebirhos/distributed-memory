@@ -1,10 +1,12 @@
 #include "message.h"
+#include "logger.h"
 #include <dm/client.h>
 #include <dm/type.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <stdio.h>
+#include <errno.h>
+#include <string.h>             // strerror
 using namespace std;
 
 
@@ -136,9 +138,8 @@ int Client::dm_block_wait(int id) {
   return 0;
 }
 
-
 int Client::open_socket(string ip, string port) {
-  cout << "Connetto a " << ip << ":" << port << endl; // FIXME
+  Logger::debug() << "connects to " << ip << ":" << port << endl;
   addrinfo hints = {0};
   addrinfo *server_addrinfo, *p;
   int sockfd;
@@ -147,18 +148,20 @@ int Client::open_socket(string ip, string port) {
   getaddrinfo( ip.c_str(), port.c_str(), &hints, &server_addrinfo );
   for (p = server_addrinfo; p != NULL; p = p->ai_next) {
     if ((sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
-      cout << "errore socket" << endl; // FIXME
+      Logger::debug() << "error on socket()" << endl;
       continue;
     }
     if (connect( sockfd, p->ai_addr, p->ai_addrlen ) < 0) {
       close(sockfd);
-      cout << "errore connect" << endl; // FIXME
+      Logger::debug() << "error on connect()" << endl;
       continue;
     }
+    // if we reach this point we have a valid socket
     break;
   }
   if (p == NULL) {
-    perror("Errore: ");         // FIXME
+    Logger::error() << "error connecting " << ip << ":" << port << ": " << strerror(errno) << endl;
+    sockfd = -1;
   }
   freeaddrinfo(server_addrinfo);
   return sockfd;

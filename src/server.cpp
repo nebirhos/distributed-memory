@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstring>
+#include "logger.h"
 using namespace std;
 
 
@@ -16,21 +17,21 @@ namespace DM {
 Server::Server(string config_path, string id)
   : config(config_path),
     id(id) {
+  Logger::info() << "Distributed Memory server" << endl;
+  Logger::debug() << "configuration file dump:\n" << config << endl;
   const vector<int>& blocks_id = config.find(id).blocks_id;
   for (unsigned int i = 0; i < blocks_id.size(); ++i) {
     BlockServer b( blocks_id[i] );
     blocks.insert( pair<int,BlockServer>(blocks_id[i], b) );
     pthread_cond_init( &blocks_wait[blocks_id[i]], 0 );
-    cout << "b.id(): " << b.id() << endl; // FIXME
-    cout << "b.revision(): " << b.revision() << endl; // FIXME
-    cout << "b.data(): " << b.data() << endl; // FIXME
-    cout << blocks[ blocks_id[i] ].dump_hex(); // FIXME
+    Logger::debug() << "create block #" << b.id() << endl;
   }
   pthread_mutex_init(&mutex, 0);
 }
 
 void Server::start() {
   listen_socket = open_socket();
+  Logger::info() << "dmserver started" << endl;
 
   while (1) {
     sockaddr_in client;
@@ -44,12 +45,13 @@ void Server::start() {
     args->obj = this;
     args->socket_d = socket_d;
     pthread_create( &tid, 0, &Server::client_handler_wrapper, (void*) args );
-    cout << "New thread tid: " << tid << endl;
+    Logger::debug() << "new thread " << tid << endl;
   }
 }
 
 void Server::stop() {
   close(listen_socket);
+  Logger::info() << "dmserver stopped\n" << endl;
 }
 
 int Server::open_socket() {
@@ -79,6 +81,7 @@ int Server::open_socket() {
   if (listen( sockfd, TCP_MAX_CONNECTIONS ) < 0) {
     throw "Listen failed FIXME";
   }
+  Logger::info() << "listening on port " << config.find(id).port << endl;
   return sockfd;
 }
 
@@ -93,6 +96,9 @@ void* Server::client_handler_wrapper(void* args) {
 void Server::client_handler(int socket_d) {
   pthread_detach( pthread_self() );
   string client_id = get_client_id(socket_d);
+  Logger::info() << client_id << " connected" << endl;
+  Logger::debug() << client_id << " on socket " << socket_d << endl;
+
   char buffer[TCP_BUFFER_SIZE];
   string message;
   int size = 0;
@@ -103,6 +109,7 @@ void Server::client_handler(int socket_d) {
 
     size_t token_stop = message.find( Message::STOP );
     if (token_stop != string::npos) {
+      Logger::debug() << "Message to parse: " << message << endl;
       Message msg(message);
       int block_id;
       string ack;
@@ -111,26 +118,23 @@ void Server::client_handler(int socket_d) {
       switch ( msg.type() ) {
       case MAP:
         block_id = msg.block()->id();
-        cout << "block_id: " << block_id << endl; // FIXME
+        Logger::info() << client_id << " maps block #" << block_id << endl;
         pthread_mutex_lock( &mutex );
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.map(client_id);
-          cout << "it->second.dump_hex(): " << it->second.dump_hex() << endl; // FIXME
           ack = Message::emit(ACK, it->second) + Message::STOP;
         }
         else {
           ack = Message::emit(NACK) + Message::STOP;
         }
-        cout << "ack.size(): " << ack.size() << endl; // FIXME
-        cout << "ack: " << ack << endl; // FIXME
         pthread_mutex_unlock( &mutex );
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
 
       case UNMAP:
         block_id = msg.block()->id();
-        cout << "block_id: " << block_id << endl; // FIXME
+        Logger::info() << client_id << " unmaps block #" << block_id << endl;
         pthread_mutex_lock( &mutex );
         it = blocks.find(block_id);
         if (it != blocks.end()) {
@@ -155,18 +159,19 @@ void Server::client_handler(int socket_d) {
         break;
       case WRITE:
         block_id = msg.block()->id();
-        cout << "block_id: " << block_id << endl; // FIXME
+        Logger::info() << client_id << " writes block #" << block_id << endl;
         ack = Message::emit(NACK) + Message::STOP;
         pthread_mutex_lock( &mutex );
         it = blocks.find(block_id);
         if (it != blocks.end()) {
+          Logger::debug() << " client block revision: " << msg.block()->revision() << endl;
+          Logger::debug() << " server block revision: " << it->second.revision() << endl;
           if ( it->second.revision() == msg.block()->revision() ) {
             it->second = *((BlockServer*)  msg.block());
             it->second.add_revision();
             ack = Message::emit(ACK) + Message::STOP;
-            cout << "it->second.revision(): " << it->second.revision() << endl; // FIXME
-            cout << "it->second.dump_hex(): " << it->second.dump_hex() << endl; // FIXME
-            cout << "it->second.data(): " << (char*) it->second.data() << endl; // FIXME
+            Logger::debug() << " server block revision: " << it->second.revision() << endl;
+            Logger::debug() << " server block data: " << (char*) it->second.data() << endl;
           }
         }
         pthread_cond_broadcast( &blocks_wait[block_id] );
@@ -175,21 +180,21 @@ void Server::client_handler(int socket_d) {
         break;
       case WAIT:
         block_id = msg.block()->id();
-        cout << "block_id: " << block_id << endl; // FIXME
         ack = Message::emit(ACK) + Message::STOP;
         pthread_mutex_lock( &mutex );
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           while ( it->second.revision() == msg.block()->revision() ) {
-            cout << "waitin for block changes..." << endl; // FIXME
+            Logger::info() << client_id << " waits for block #" << block_id << endl;
             pthread_cond_wait( &blocks_wait[block_id], &mutex );
-            cout << "now is changed!" << endl; // FIXME
+            Logger::info() << client_id << " stop waiting for block #" << block_id << endl;
           }
         }
         pthread_mutex_unlock( &mutex );
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       default:
+        Logger::error() << client_id << " request error: " << message << endl;
         ack = Message::emit(NACK) + Message::STOP;
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
@@ -197,8 +202,8 @@ void Server::client_handler(int socket_d) {
       message.clear();
     }
   } while ( size != 0 );
+  Logger::info() << client_id << " disconnected" << endl;
   close(socket_d);
-  cout << "Here is the message: ---" << message << "---" << endl; // FIXME
 }
 
 string Server::get_client_id(int socket_d) {

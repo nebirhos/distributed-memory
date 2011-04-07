@@ -2,10 +2,10 @@
 #define _DM_CLIENT_H_
 
 #include "config.h"
-#include <dm/block_local.h>
+#include "block_local.h"
 #include <iostream>
 
-
+/** Distributed Memory interfaces and implementations */
 namespace DM {
 
 class Client {
@@ -23,6 +23,10 @@ private:
   map<string,int> server_sockets;
   map<int,BlockLocal> blocks;
 
+  /**
+   * @return
+   *   -1 if failed. otherwise, socket file descriptor number
+   */
   int open_socket(string, string);
   int send_socket(int, string);
   string receive_socket(int);

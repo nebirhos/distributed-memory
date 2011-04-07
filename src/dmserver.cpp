@@ -15,11 +15,15 @@ void kill_handler(int sig);
 
 int main(int argc, char *argv[]) {
   parse_args(argc, argv);
-
-  server = new DM::Server(config_path, server_id);
-  signal(SIGINT, kill_handler);
-  server->start();
-
+  try {
+    server = new DM::Server(config_path, server_id);
+    signal(SIGINT, kill_handler);
+    server->start();
+  }
+  catch(...) {
+    cout << "Something nasty happened, exiting..." << endl;
+    exit(1);
+  }
   return 0;
 }
 
@@ -51,6 +55,10 @@ void parse_args(int argc, char* argv[]) {
       default:
         show_usage(1);
     }
+  }
+  if (server_id.empty()) {
+    cout << "argument 'ip:port' required" << endl;
+    show_usage(1);
   }
 }
 

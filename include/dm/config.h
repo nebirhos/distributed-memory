@@ -11,7 +11,7 @@ using namespace std;
 namespace DM {
 
 /**
- * Config read and stores the configuration file.
+ * Read and stores the configuration file data.
  * The file is written using YAML syntax and MUST have these keys:
  * port, ip, blocks
  */

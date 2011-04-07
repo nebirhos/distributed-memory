@@ -65,11 +65,11 @@ ostream& operator<<(ostream& output, const Config& c) {
     output << "  blocks: [";
     for (unsigned int i = 0; i < server.blocks_id.size(); ++i) {
       output << server.blocks_id[i];
-      if (i < server.blocks_id.size() - 1) {
-        cout << ", ";
+      if ( i < server.blocks_id.size() - 1 ) {
+        output << ", ";
       }
     }
-    output << "]" << endl;
+    output << "]\n";
   }
   return output;
 }
