@@ -60,3 +60,26 @@ TEST(DM_Message, emit_block_force_shallow) {
   EXPECT_STREQ( "{type: MAP, block: {id: 1, revision: 0}}",
                 DM::Message::emit(DM::MAP, block, true).c_str() );
 }
+
+TEST(DM_Message, emit_block_binary) {
+  char block_data[128];
+  unsigned int* ptr_data = (unsigned int*) block_data;
+  *(ptr_data)    = 65535u;
+  *(ptr_data+1)  = 65534u;
+  *(ptr_data+2)  = 65533u;
+
+  DM::BlockServer block(1);
+  block.data( block_data );
+
+  string emitted = DM::Message::emit(DM::MAP, block);
+  DM::Message p(emitted);
+
+  ptr_data = (unsigned int*) p.block()->data();
+  ASSERT_EQ( 65535u, *(ptr_data) );
+  ASSERT_EQ( 65534u, *(ptr_data+1) );
+  ASSERT_EQ( 65533u, *(ptr_data+2) );
+
+  for (int i = 0; i < 128; ++i) {
+    ASSERT_EQ( block_data[i], ((char*)p.block()->data())[i] );
+  }
+}

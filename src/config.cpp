@@ -21,7 +21,7 @@ Config::Config(string filename) {
       ServerConf server;
       server_conf["ip"] >> server.ip;
       server_conf["port"] >> server.port;
-      server.blocks_id = server_conf["blocks"];
+      server_conf["blocks"] >> server.blocks_id;
       ostringstream id;
       id << server.ip << ":" << server.port;
       servers[id.str()] = server;

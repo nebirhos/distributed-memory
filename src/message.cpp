@@ -58,7 +58,8 @@ Message& Message::parse(string message) {
 MessageType Message::type() {
   try {
     string type;
-    MessageType result = Message::string_to_type[ node["type"] ];
+    node["type"] >> type;
+    MessageType result = Message::string_to_type[type];
     if (result == 0)
       result = UNDEF;
     return result;
@@ -71,16 +72,18 @@ MessageType Message::type() {
 const Block* Message::block() {
   try {
     if (m_block == NULL) {
-      int block_id = node["block"]["id"];
+      int block_id;
+      node["block"]["id"] >> block_id;
       int revision;
       // revision key optional
       if ( const YAML::Node* nrev = node["block"].FindValue("revision") ) {
-        revision = *nrev;
+        *nrev >> revision;
       }
       // data key optional
       if ( const YAML::Node* ndata = node["block"].FindValue("data") ) {
         m_block = new BlockServer( block_id );
-        string block_data = *ndata;
+        string block_data;
+        *ndata >> block_data;
         char* buffer = new char[m_block->size()];
         base64::decode( block_data.c_str(), block_data.size(), buffer, m_block->size()+1 );
         m_block->data( buffer );
@@ -122,7 +125,7 @@ string Message::emit(MessageType type, const Block& block, bool shallow) {
   emt << YAML::Key << "revision" << YAML::Value << block.revision();
   // not shallow block
   if ( !shallow && block.data() != NULL ) {
-    emt << YAML::Key << "data" << YAML::Value << YAML::Binary((char*) block.data(), block.size());
+    emt << YAML::Key << "data" << YAML::Value << YAML::Binary((unsigned char*) block.data(), block.size());
   }
   emt << YAML::EndMap;
 
