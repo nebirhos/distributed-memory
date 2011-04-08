@@ -148,14 +148,27 @@ void Server::client_handler(int socket_d) {
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       case UPDATE:
-      //   Block& b = blocks.find(msg.block());
-      //   if (msg.block().rev() < b.rev()) {
-      //     string ack = Message::emit(ACK, b);
-      //   }
-      //   else {
-      //     string ack = Message::emit(ACK);
-      //   }
-      //   send(ack);
+        block_id = msg.block()->id();
+        Logger::info() << client_id << " updates block #" << block_id << endl;
+        pthread_mutex_lock( &mutex );
+        it = blocks.find(block_id);
+        if (it != blocks.end()) {
+          Logger::debug() << "server data: ---" << (char*) it->second.data() << "---" << endl;
+          Logger::debug() << "client rev: " << msg.block()->revision() << " server rev: " << it->second.revision() << endl;
+          if ( msg.block()->revision() < it->second.revision() ) {
+            Logger::debug() << "UPDATE sends entire block" << endl;
+            ack = Message::emit(ACK, it->second) + Message::STOP;
+          }
+          else {
+            Logger::debug() << "UPDATE sends shallow block" << endl;
+            ack = Message::emit(ACK, it->second, true) + Message::STOP;
+          }
+        }
+        else {
+          ack = Message::emit(NACK) + Message::STOP;
+        }
+        pthread_mutex_unlock( &mutex );
+        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       case WRITE:
         block_id = msg.block()->id();

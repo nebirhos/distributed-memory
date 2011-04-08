@@ -77,6 +77,40 @@ int Client::dm_block_unmap(int id) {
   return 0;
 }
 
+int Client::dm_block_update(int id) {
+  string server_id = config.find_server_id_by_block_id(id);
+  if ( server_id.empty() )
+    return -1;
+  map<int,BlockLocal>::iterator it = blocks.find(id);
+  // block not mapped
+  if ( it == blocks.end() )
+    return -2;
+
+  int sockfd = server_sockets[server_id];
+  if (sockfd < 0)
+    return -3;
+
+  BlockLocal& block = it->second;
+  string req = Message::emit(UPDATE, block, true) + Message::STOP;
+  Logger::debug() << "UPDATE message: " << req << endl; // FIXME
+  send_socket(sockfd, req);
+
+  req = receive_socket(sockfd);
+  Message ack( req );
+  if (ack.type() == NACK)
+    return -4;
+
+  // updates only if local block is invalid
+  if (block.revision() != ack.block()->revision()) {
+    Logger::debug() << "before: " << block.revision() << endl; // FIXME
+    block = *( ack.block() );
+    block.valid(true);
+    Logger::debug() << "after: " << block.revision() << endl; // FIXME
+  }
+
+  return 0;
+}
+
 int Client::dm_block_write(int id) {
   string server_id = config.find_server_id_by_block_id(id);
   if ( server_id.empty() )
