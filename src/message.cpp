@@ -41,6 +41,10 @@ Message::Message(string message)
     parse(message);
 }
 
+Message::~Message() {
+  delete m_block;
+}
+
 Message& Message::parse(string message) {
   try {
     istringstream ss(message);

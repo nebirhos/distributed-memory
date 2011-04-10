@@ -11,6 +11,7 @@ namespace DM {
 class Message {
 public:
   Message(string message = "");
+  ~Message();
   Message& parse(string message);
 
   MessageType type();
