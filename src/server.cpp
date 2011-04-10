@@ -45,7 +45,6 @@ void Server::start() {
     args->obj = this;
     args->socket_d = socket_d;
     pthread_create( &tid, 0, &Server::client_handler_wrapper, (void*) args );
-    Logger::debug() << "new thread " << tid << endl;
   }
 }
 
@@ -109,7 +108,6 @@ void Server::client_handler(int socket_d) {
 
     size_t token_stop = message.find( Message::STOP );
     if (token_stop != string::npos) {
-      Logger::debug() << "Message to parse: " << message << endl;
       Message msg(message);
       int block_id;
       string ack;
@@ -118,8 +116,8 @@ void Server::client_handler(int socket_d) {
       switch ( msg.type() ) {
       case MAP:
         block_id = msg.block()->id();
-        Logger::info() << client_id << " maps block #" << block_id << endl;
         pthread_mutex_lock( &mutex );
+        Logger::info() << client_id << " maps block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.map(client_id);
@@ -134,8 +132,8 @@ void Server::client_handler(int socket_d) {
 
       case UNMAP:
         block_id = msg.block()->id();
-        Logger::info() << client_id << " unmaps block #" << block_id << endl;
         pthread_mutex_lock( &mutex );
+        Logger::info() << client_id << " unmaps block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           it->second.unmap(client_id);
@@ -149,8 +147,8 @@ void Server::client_handler(int socket_d) {
         break;
       case UPDATE:
         block_id = msg.block()->id();
-        Logger::info() << client_id << " updates block #" << block_id << endl;
         pthread_mutex_lock( &mutex );
+        Logger::info() << client_id << " updates block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           Logger::debug() << "server data: ---" << (char*) it->second.data() << "---" << endl;
@@ -172,9 +170,9 @@ void Server::client_handler(int socket_d) {
         break;
       case WRITE:
         block_id = msg.block()->id();
-        Logger::info() << client_id << " writes block #" << block_id << endl;
         ack = Message::emit(NACK) + Message::STOP;
         pthread_mutex_lock( &mutex );
+        Logger::info() << client_id << " writes block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           Logger::debug() << " client block revision: " << msg.block()->revision() << endl;
@@ -207,7 +205,9 @@ void Server::client_handler(int socket_d) {
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       default:
+        pthread_mutex_lock( &mutex );
         Logger::error() << client_id << " request error: " << message << endl;
+        pthread_mutex_unlock( &mutex );
         ack = Message::emit(NACK) + Message::STOP;
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
@@ -215,7 +215,9 @@ void Server::client_handler(int socket_d) {
       message.clear();
     }
   } while ( size != 0 );
+  pthread_mutex_lock( &mutex );
   Logger::info() << client_id << " disconnected" << endl;
+  pthread_mutex_unlock( &mutex );
   close(socket_d);
 }
 
