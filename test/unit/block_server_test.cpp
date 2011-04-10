@@ -6,7 +6,7 @@ TEST(DM_BlockServer, constructor) {
   DM::BlockServer b(123);
   EXPECT_EQ( 123, b.id() );
   EXPECT_EQ( 0, b.revision() );
-  EXPECT_NE( NULL, (int) b.data() );
+  EXPECT_NE( (void*) NULL, b.data() );
 
   DM::BlockServer b2(456);
   EXPECT_NE( b.data(), b2.data() );

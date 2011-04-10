@@ -6,7 +6,7 @@ TEST(DM_BlockLocal, constructor) {
   DM::BlockLocal b(123, NULL);
   EXPECT_EQ( 123, b.id() );
   EXPECT_EQ( 0, b.revision() );
-  EXPECT_EQ( NULL, (int) b.data() );
+  EXPECT_EQ( (void*) NULL, b.data() );
 }
 
 TEST(DM_BlockLocal, copy) {

@@ -198,7 +198,7 @@ int Client::dm_block_wait(int id) {
 
 int Client::open_socket(string ip, string port) {
   Logger::debug() << "connects to " << ip << ":" << port << endl;
-  addrinfo hints = {0};
+  addrinfo hints = {0,0,0,0,0,0,0,0}; // all setted only to suppress warnings
   addrinfo *server_addrinfo, *p;
   int sockfd;
   hints.ai_family = AF_UNSPEC;
@@ -236,7 +236,8 @@ int Client::send_socket(int sockfd, string message) {
 string Client::receive_socket(int sockfd) {
   char buffer[TCP_BUFFER_SIZE];
   string message;
-  int size, token_stop;
+  int size;
+  size_t token_stop;
   do {
     size = recv( sockfd, (void*) buffer, TCP_BUFFER_SIZE-1, 0 );
     buffer[size] = 0;

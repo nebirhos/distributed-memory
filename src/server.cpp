@@ -55,7 +55,7 @@ void Server::stop() {
 }
 
 int Server::open_socket() {
-  addrinfo hints = {0};
+  addrinfo hints = {0,0,0,0,0,0,0,0}; // all setted only to suppress warnings
   addrinfo *server_addrinfo, *p;
   int sockfd;
   hints.ai_family = AF_UNSPEC;  // both IPv4 and IPv6
