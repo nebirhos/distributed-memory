@@ -19,8 +19,16 @@ void Client::dm_init(char* config_file) {
 
   ServerMap servers = config.find_all();
   ServerMap::iterator it;
+  timeval timeout;
+  timeout.tv_sec = TCP_TIMEOUT;
+  timeout.tv_usec = 0;
   for (it = servers.begin(); it != servers.end(); ++it) {
-    server_sockets[it->first] = open_socket(it->second.ip, it->second.port);
+    int sockfd = open_socket(it->second.ip, it->second.port);
+    server_sockets[it->first] = sockfd;
+    int res = setsockopt( sockfd, SOL_SOCKET, SO_RCVTIMEO, (timeval*) &timeout, sizeof(timeval) );
+    Logger::debug() << "set RCVTIMEO: " << res << " " << strerror(errno) << endl;
+    res = setsockopt( sockfd, SOL_SOCKET, SO_SNDTIMEO, (timeval*) &timeout, sizeof(timeval) );
+    Logger::debug() << "set SNDTIMEO: " << res << " " << strerror(errno) << endl;
   }
 }
 
@@ -44,6 +52,9 @@ int Client::dm_block_map(int id, void* address) {
   send_socket(sockfd, req);
 
   req = receive_socket(sockfd);
+  if (req.empty())
+    return -4;
+
   Message ack( req );
   if (ack.type() == NACK)
     return -4;
@@ -69,6 +80,9 @@ int Client::dm_block_unmap(int id) {
   send_socket(sockfd, req);
 
   req = receive_socket(sockfd);
+  if (req.empty())
+    return -4;
+
   Message ack( req );
   if (ack.type() == NACK)
     return -4;
@@ -96,6 +110,9 @@ int Client::dm_block_update(int id) {
   send_socket(sockfd, req);
 
   req = receive_socket(sockfd);
+  if (req.empty())
+    return -4;
+
   Message ack( req );
   if (ack.type() == NACK)
     return -4;
@@ -129,9 +146,13 @@ int Client::dm_block_write(int id) {
     return -4;
 
   string req = Message::emit(WRITE, block) + Message::STOP;
+  Logger::debug() << "req: " << req << endl;
   send_socket(sockfd, req);
 
   req = receive_socket(sockfd);
+  if (req.empty())
+    return -4;
+
   Message ack( req );
   if (ack.type() == NACK) {
     block.valid(false);
@@ -163,9 +184,12 @@ int Client::dm_block_wait(int id) {
   send_socket(sockfd, req);
 
   req = receive_socket(sockfd);
+  if (req.empty())
+    return -4;
+
   Message ack( req );
   if (ack.type() != ACK) {
-    return -5;
+    return -4;
   }
 
   block.valid(false);
@@ -202,7 +226,11 @@ int Client::open_socket(string ip, string port) {
 }
 
 int Client::send_socket(int sockfd, string message) {
-  return send( sockfd, (void*) message.c_str(), message.size(), 0 );
+  int result = send( sockfd, (void*) message.c_str(), message.size(), 0 );
+  if (result < 0) {
+    Logger::debug() << "TIMEOUT send(): " << result << endl; 
+  }
+  return result;
 }
 
 string Client::receive_socket(int sockfd) {
@@ -214,7 +242,12 @@ string Client::receive_socket(int sockfd) {
     buffer[size] = 0;
     message += buffer;
     token_stop = message.find( Message::STOP );
-  } while ( (size != 0) && (token_stop == string::npos) );
+  } while ( (size > 0) && (token_stop == string::npos) );
+  if (size < 0) {
+    message.clear();
+    Logger::debug() << "TIMEOUT recv(): " << size << endl; 
+  }
+
   return message;
 }
 

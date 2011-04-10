@@ -5,6 +5,7 @@
 #define DEFAULT_CONFIG_PATH "dmconfig.yml"
 #define TCP_MAX_CONNECTIONS 64
 #define TCP_BUFFER_SIZE 1024
+#define TCP_TIMEOUT 20
 #define LOG_LEVEL LOG_DEBUG
 
 #include <string>
