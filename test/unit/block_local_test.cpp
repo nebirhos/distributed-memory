@@ -78,9 +78,3 @@ TEST(DM_BlockLocal, valid) {
   b.valid(false);
   EXPECT_EQ( false, b.valid() );
 }
-
-TEST(DM_BlockLocal, map) {
-  DM::BlockLocal b(123, NULL);
-  EXPECT_EQ( 0, b.map("foo") );
-  EXPECT_NE( 0, b.map("foo again") );
-}

@@ -14,12 +14,10 @@ public:
   ~BlockLocal() {};
   BlockLocal& operator=(const Block &);
 
-  int map(string server_id);
   bool valid();
   void valid(bool);
 
 private:
-  string m_server_id;
   bool m_valid;
 };
 

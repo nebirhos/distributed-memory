@@ -41,7 +41,6 @@ int Client::dm_block_map(int id, void* address) {
     return -2;
 
   BlockLocal block(id, address);
-  block.map(server_id);
   blocks.insert( pair<int,BlockLocal>(id,block) );
 
   int sockfd = server_sockets[server_id];
