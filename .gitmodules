@@ -1,3 +1,6 @@
 [submodule "lib/yaml-cpp"]
 	path = lib/yaml-cpp
 	url = https://github.com/nebirhos/yaml-cpp.git
+[submodule "lib/base-encodings"]
+	path = lib/base-encodings
+	url = https://github.com/flow3r/base-encodings.git
