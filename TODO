@@ -1,0 +1,4 @@
+* source comments for Doxygen
+* list instead of vector?
+* mutex for client library?
+* list instead of map<int,Block>?
