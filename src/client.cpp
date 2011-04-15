@@ -18,49 +18,52 @@ Client::Client() : config("") {}
 void Client::dm_init(char* config_file) {
   config = Config(config_file);
   if ( !config.is_valid() ) {
-    throw runtime_error("configuration file '" + string(config_file) + "' not valid");
+    throw runtime_error("configuration file not valid");
   }
 
   ServerMap servers = config.find_all();
   ServerMap::iterator it;
-  timeval timeout;
-  timeout.tv_sec = TCP_TIMEOUT;
-  timeout.tv_usec = 0;
   for (it = servers.begin(); it != servers.end(); ++it) {
     int sockfd = open_socket(it->second.ip, it->second.port);
+    if (sockfd < 0) {
+      throw runtime_error("connection to server failed");
+    }
     server_sockets[it->first] = sockfd;
-    int res = setsockopt( sockfd, SOL_SOCKET, SO_RCVTIMEO, (timeval*) &timeout, sizeof(timeval) );
-    Logger::debug() << "set RCVTIMEO: " << res << " " << strerror(errno) << endl;
-    res = setsockopt( sockfd, SOL_SOCKET, SO_SNDTIMEO, (timeval*) &timeout, sizeof(timeval) );
-    Logger::debug() << "set SNDTIMEO: " << res << " " << strerror(errno) << endl;
   }
 }
 
 int Client::dm_block_map(int id, void* address) {
   string server_id = config.find_server_id_by_block_id(id);
-  if ( server_id.empty() )
+  if ( server_id.empty() ) {
+    Logger::debug() << "block #" << id << " not found" << endl;
     return -1;
-  // block already mapped
-  if ( blocks.find(id) != blocks.end() )
+  }
+  if ( blocks.find(id) != blocks.end() ) {
+    Logger::debug() << "block #" << id << " already mapped" << endl;
     return -2;
+  }
+  int sockfd = server_sockets[server_id];
+  if ( sockfd <= 0 ) {
+    Logger::debug() << "socket not valid" << endl;
+    return -3;
+  }
 
   BlockLocal block(id, address);
   blocks.insert( pair<int,BlockLocal>(id,block) );
 
-  int sockfd = server_sockets[server_id];
-  if (sockfd < 0)
-    return -3;
-
   string req = Message::emit(MAP, block, true) + Message::STOP;
-  send_socket(sockfd, req);
-
+  if ( send_socket(sockfd, req) < 0 ) {
+    return -4;
+  }
   req = receive_socket(sockfd);
-  if (req.empty())
+  if ( req.empty() ) {
     return -4;
-
+  }
   Message ack( req );
-  if (ack.type() == NACK)
-    return -4;
+  if (ack.type() == NACK) {
+    Logger::debug() << "NACK received mapping block #" << id << endl;
+    return -5;
+  }
 
   blocks[id] = ack.block();
   return 0;
@@ -68,27 +71,34 @@ int Client::dm_block_map(int id, void* address) {
 
 int Client::dm_block_unmap(int id) {
   string server_id = config.find_server_id_by_block_id(id);
-  if ( server_id.empty() )
+  if ( server_id.empty() ) {
+    Logger::debug() << "block #" << id << " not found" << endl;
     return -1;
+  }
   map<int,BlockLocal>::iterator it = blocks.find(id);
-  // block not mapped
-  if ( it == blocks.end() )
+  if ( it == blocks.end() ){
+    Logger::debug() << "block #" << id << " not mapped" << endl;
     return -2;
-
+  }
   int sockfd = server_sockets[server_id];
-  if (sockfd < 0)
+  if ( sockfd <= 0 ) {
+    Logger::debug() << "socket not valid" << endl;
     return -3;
+  }
 
   string req = Message::emit(UNMAP, it->second, true) + Message::STOP;
-  send_socket(sockfd, req);
-
+  if ( send_socket(sockfd, req) < 0 ) {
+    return -4;
+  }
   req = receive_socket(sockfd);
-  if (req.empty())
+  if (req.empty()) {
     return -4;
-
+  }
   Message ack( req );
-  if (ack.type() == NACK)
-    return -4;
+  if (ack.type() == NACK) {
+    Logger::debug() << "NACK received unmapping block #" << id << endl;
+    return -5;
+  }
 
   blocks.erase(it);
   return 0;
@@ -96,36 +106,40 @@ int Client::dm_block_unmap(int id) {
 
 int Client::dm_block_update(int id) {
   string server_id = config.find_server_id_by_block_id(id);
-  if ( server_id.empty() )
+  if ( server_id.empty() ) {
+    Logger::debug() << "block #" << id << " not found" << endl;
     return -1;
+  }
   map<int,BlockLocal>::iterator it = blocks.find(id);
-  // block not mapped
-  if ( it == blocks.end() )
+  if ( it == blocks.end() ){
+    Logger::debug() << "block #" << id << " not mapped" << endl;
     return -2;
-
+  }
   int sockfd = server_sockets[server_id];
-  if (sockfd < 0)
+  if ( sockfd <= 0 ) {
+    Logger::debug() << "socket not valid" << endl;
     return -3;
+  }
 
   BlockLocal& block = it->second;
   string req = Message::emit(UPDATE, block, true) + Message::STOP;
-  Logger::debug() << "UPDATE message: " << req << endl; // FIXME
-  send_socket(sockfd, req);
-
+  if ( send_socket(sockfd, req) < 0 ) {
+    return -4;
+  }
   req = receive_socket(sockfd);
-  if (req.empty())
+  if ( req.empty() ) {
     return -4;
-
+  }
   Message ack( req );
-  if (ack.type() == NACK)
-    return -4;
+  if (ack.type() == NACK) {
+    Logger::debug() << "NACK received" << endl;
+    return -5;
+  }
 
   // updates only if local block is invalid
-  if (block.revision() != ack.block().revision()) {
-    Logger::debug() << "before: " << block.revision() << endl; // FIXME
+  if ( block.revision() != ack.block().revision() ) {
     block = ack.block();
     block.valid(true);
-    Logger::debug() << "after: " << block.revision() << endl; // FIXME
   }
 
   return 0;
@@ -133,33 +147,40 @@ int Client::dm_block_update(int id) {
 
 int Client::dm_block_write(int id) {
   string server_id = config.find_server_id_by_block_id(id);
-  if ( server_id.empty() )
+  if ( server_id.empty() ) {
+    Logger::debug() << "block #" << id << " not found" << endl;
     return -1;
+  }
   map<int,BlockLocal>::iterator it = blocks.find(id);
-  // block not mapped
-  if ( it == blocks.end() )
+  if ( it == blocks.end() ){
+    Logger::debug() << "block #" << id << " not mapped" << endl;
     return -2;
-
+  }
   int sockfd = server_sockets[server_id];
-  if (sockfd < 0)
+  if ( sockfd <= 0 ) {
+    Logger::debug() << "socket not valid" << endl;
     return -3;
+  }
 
   BlockLocal& block = it->second;
-  if ( !block.valid() )
-    return -4;
+  if ( !block.valid() ) {
+    Logger::debug() << "block #" << id << " invalid" << endl;
+    return -5;
+  }
 
   string req = Message::emit(WRITE, block) + Message::STOP;
-  Logger::debug() << "req: " << req << endl;
-  send_socket(sockfd, req);
-
-  req = receive_socket(sockfd);
-  if (req.empty())
+  if ( send_socket(sockfd, req) < 0 ) {
     return -4;
-
+  }
+  req = receive_socket(sockfd);
+  if ( req.empty() ) {
+    return -4;
+  }
   Message ack( req );
   if (ack.type() == NACK) {
     block.valid(false);
-    return -4;
+    Logger::debug() << "NACK received writing block #" << id << endl;
+    return -5;
   }
 
   block.add_revision();
@@ -168,30 +189,38 @@ int Client::dm_block_write(int id) {
 
 int Client::dm_block_wait(int id) {
   string server_id = config.find_server_id_by_block_id(id);
-  if ( server_id.empty() )
+  if ( server_id.empty() ) {
+    Logger::debug() << "block #" << id << " not found" << endl;
     return -1;
+  }
   map<int,BlockLocal>::iterator it = blocks.find(id);
-  // block not mapped
-  if ( it == blocks.end() )
+  if ( it == blocks.end() ){
+    Logger::debug() << "block #" << id << " not mapped" << endl;
     return -2;
-
+  }
   int sockfd = server_sockets[server_id];
-  if (sockfd < 0)
+  if ( sockfd <= 0 ) {
+    Logger::debug() << "socket not valid" << endl;
     return -3;
+  }
 
   BlockLocal& block = it->second;
-  if ( !block.valid() )
+  if ( !block.valid() ) {
+    Logger::debug() << "block #" << id << " invalid" << endl;
     return 0;
+  }
 
   string req = Message::emit(WAIT, block, true) + Message::STOP;
-  send_socket(sockfd, req);
-
-  req = receive_socket(sockfd);
-  if (req.empty())
+  if ( send_socket(sockfd, req) < 0 ) {
     return -4;
-
+  }
+  req = receive_socket(sockfd);
+  if ( req.empty() ) {
+    return -4;
+  }
   Message ack( req );
-  if (ack.type() != ACK) {
+  if (ack.type() == NACK) {
+    Logger::debug() << "NACK received waiting block #" << id << endl;
     return -4;
   }
 
@@ -221,10 +250,17 @@ int Client::open_socket(string ip, string port) {
     break;
   }
   if (p == NULL) {
-    Logger::error() << "error connecting " << ip << ":" << port << ": " << strerror(errno) << endl;
+    Logger::debug() << "error connecting " << ip << ":" << port << ": " << strerror(errno) << endl;
     sockfd = -1;
   }
   freeaddrinfo(server_addrinfo);
+  // set socket TIMEOUT
+  timeval timeout;
+  timeout.tv_sec = TCP_TIMEOUT;
+  timeout.tv_usec = 0;
+  int res = setsockopt( sockfd, SOL_SOCKET, SO_RCVTIMEO, (timeval*) &timeout, sizeof(timeval) );
+  res = setsockopt( sockfd, SOL_SOCKET, SO_SNDTIMEO, (timeval*) &timeout, sizeof(timeval) );
+
   return sockfd;
 }
 

@@ -18,13 +18,15 @@ namespace DM {
 Server::Server(string config_path, string id)
   : config(config_path),
     id(id) {
+  Logger::info() << "Distributed Memory server" << endl;
   if ( !config.is_valid() ) {
-    throw runtime_error("configuration file '" + config_path + "' not valid");
+    Logger::error() << "configuration file '" << config_path << "' not valid" << endl;
+    throw runtime_error("");
   }
   if ( &config.find(id) == NULL ) {
-    throw runtime_error("server '" + id + "' not found in configuration");
+    Logger::error() << "server '" << id << "' not found in configuration" << endl;
+    throw runtime_error("");
   }
-  Logger::info() << "Distributed Memory server" << endl;
   const vector<int>& blocks_id = config.find(id).blocks_id;
   for (unsigned int i = 0; i < blocks_id.size(); ++i) {
     BlockServer b( blocks_id[i] );
@@ -44,7 +46,10 @@ void Server::start() {
     socklen_t addrlen = sizeof(sockaddr_in);
     int socket_d = accept( listen_socket, (sockaddr*) &client, &addrlen );
     if (socket_d < 0) {
-      throw "Accept failed FIXME";
+      pthread_mutex_lock( &mutex );
+      Logger::error() << "cannot connect to client" << endl;
+      pthread_mutex_unlock( &mutex );
+      continue;
     }
     pthread_t tid;
     HandlerWrapperArgs* args = new HandlerWrapperArgs;
@@ -63,11 +68,12 @@ int Server::open_socket() {
   addrinfo hints = {0,0,0,0,0,0,0,0}; // all setted only to suppress warnings
   addrinfo *server_addrinfo, *p;
   int sockfd;
+  string port = config.find(id).port;
   hints.ai_family = AF_UNSPEC;  // both IPv4 and IPv6
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  getaddrinfo(NULL, config.find(id).port.c_str(), &hints, &server_addrinfo);
+  getaddrinfo(NULL, port.c_str(), &hints, &server_addrinfo);
   for ( p = server_addrinfo; p != NULL; p = p->ai_next ) {
     if ((sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
       continue;
@@ -78,19 +84,20 @@ int Server::open_socket() {
     }
     break;
   }
-  if (p == NULL) {
-    throw "open_socket failed FIXME";
-  }
   freeaddrinfo(server_addrinfo);
+  if (p == NULL) {
+    Logger::error() << "cannot open listening socket on port " << port << endl;
+    throw runtime_error("");
+  }
 
   if (listen( sockfd, TCP_MAX_CONNECTIONS ) < 0) {
-    throw "Listen failed FIXME";
+    Logger::error() << "cannot listen on port " << port << endl;
+    throw runtime_error("");
   }
-  Logger::info() << "listening on port " << config.find(id).port << endl;
+  Logger::info() << "listening on port " << port << endl;
   return sockfd;
 }
 
-/** We don't want static here! */
 void* Server::client_handler_wrapper(void* args) {
   HandlerWrapperArgs* wargs = (HandlerWrapperArgs*) args;
   wargs->obj->client_handler(wargs->socket_d);
@@ -116,7 +123,7 @@ void Server::client_handler(int socket_d) {
     if (token_stop != string::npos) {
       Message msg(message);
       int block_id;
-      string ack;
+      string ack = Message::emit(NACK) + Message::STOP;
       map<int,BlockServer>::iterator it;
 
       switch ( msg.type() ) {
@@ -125,15 +132,12 @@ void Server::client_handler(int socket_d) {
         pthread_mutex_lock( &mutex );
         Logger::info() << client_id << " maps block #" << block_id << endl;
         it = blocks.find(block_id);
-        if (it != blocks.end()) {
-          it->second.map(client_id);
-          ack = Message::emit(ACK, it->second) + Message::STOP;
-        }
-        else {
-          ack = Message::emit(NACK) + Message::STOP;
+        if ( it != blocks.end() ) {
+          if ( it->second.map(client_id) == 0 ) {
+            ack = Message::emit(ACK, it->second) + Message::STOP;
+          }
         }
         pthread_mutex_unlock( &mutex );
-        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
 
       case UNMAP:
@@ -142,23 +146,22 @@ void Server::client_handler(int socket_d) {
         Logger::info() << client_id << " unmaps block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
-          it->second.unmap(client_id);
-          ack = Message::emit(ACK) + Message::STOP;
-        }
-        else {
-          ack = Message::emit(NACK) + Message::STOP;
+          if ( it->second.unmap(client_id) == 0 ) {
+            ack = Message::emit(ACK) + Message::STOP;
+          }
+          else {
+            Logger::error() << "block #" << block_id << " not mapped" << endl;
+          }
         }
         pthread_mutex_unlock( &mutex );
-        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
+
       case UPDATE:
         block_id = msg.block().id();
         pthread_mutex_lock( &mutex );
         Logger::info() << client_id << " updates block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
-          Logger::debug() << "server data: ---" << (char*) it->second.data() << "---" << endl;
-          Logger::debug() << "client rev: " << msg.block().revision() << " server rev: " << it->second.revision() << endl;
           if ( msg.block().revision() < it->second.revision() ) {
             Logger::debug() << "UPDATE sends entire block" << endl;
             ack = Message::emit(ACK, it->second) + Message::STOP;
@@ -168,33 +171,28 @@ void Server::client_handler(int socket_d) {
             ack = Message::emit(ACK, it->second, true) + Message::STOP;
           }
         }
-        else {
-          ack = Message::emit(NACK) + Message::STOP;
-        }
         pthread_mutex_unlock( &mutex );
-        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
+
       case WRITE:
         block_id = msg.block().id();
-        ack = Message::emit(NACK) + Message::STOP;
         pthread_mutex_lock( &mutex );
         Logger::info() << client_id << " writes block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
-          Logger::debug() << " client block revision: " << msg.block().revision() << endl;
-          Logger::debug() << " server block revision: " << it->second.revision() << endl;
+          Logger::debug() << client_id << " block #" << block_id << " revi " << msg.block().revision() << endl;
+          Logger::debug() << client_id << " block #" << block_id << " serv " << it->second.revision() << endl;
+          Logger::debug() << client_id << " block #" << block_id << " data " << (char*)msg.block().data() << endl;
           if ( it->second.revision() == msg.block().revision() ) {
             it->second = msg.block();
             it->second.add_revision();
             ack = Message::emit(ACK) + Message::STOP;
-            Logger::debug() << " server block revision: " << it->second.revision() << endl;
-            Logger::debug() << " server block data: " << (char*) it->second.data() << endl;
           }
         }
         pthread_cond_broadcast( &blocks_wait[block_id] );
         pthread_mutex_unlock( &mutex );
-        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
+
       case WAIT:
         block_id = msg.block().id();
         ack = Message::emit(ACK) + Message::STOP;
@@ -208,16 +206,16 @@ void Server::client_handler(int socket_d) {
           }
         }
         pthread_mutex_unlock( &mutex );
-        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
+
       default:
         pthread_mutex_lock( &mutex );
         Logger::error() << client_id << " request error: " << message << endl;
         pthread_mutex_unlock( &mutex );
         ack = Message::emit(NACK) + Message::STOP;
-        send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       }
+      send(socket_d, (void*) ack.c_str(), ack.size(), 0);
       message.clear();
     }
   } while ( size != 0 );

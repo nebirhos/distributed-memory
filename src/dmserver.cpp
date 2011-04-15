@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     server->start();
   }
   catch(runtime_error e) {
-    cout << "Error: " << e.what() << ", exiting..." << endl;
+    cout << "Something nasty happened" << e.what() << ", exiting..." << endl;
     exit(1);
   }
   return 0;
