@@ -16,3 +16,10 @@ $(BIN): $(OBJECTS)
 
 clean:
 	rm -f $(BIN) $(OBJECTS)
+	rm -f *.log
+
+run:
+	./serverctl start
+	./readertest
+	./serverctl stop
+

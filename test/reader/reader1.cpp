@@ -1,5 +1,6 @@
 #include <dm/client.h>
 #include <fstream>
+#include <stdexcept>
 using namespace std;
 
 
@@ -10,57 +11,80 @@ int main(int argc, char *argv[]) {
     return 1;
 
   DM::Client client;
-  client.dm_init( argv[1] );
+  try {
+    client.dm_init( argv[1] );
+  }
+  catch (runtime_error e) {
+    cerr << "Something nasty happened: " << e.what() << ", exiting..." << endl;
+    return 1;
+  }
 
-  // open file and calculate n of blocks
+  // opens file and calculate number of blocks
   ifstream text( argv[2] );
   text.seekg (0, ios::end);
   int textsize = text.tellg();
   text.seekg (0, ios::beg);
   int n_blocks = (textsize / DIMBLOCK) + 1;
 
+  // maps blocks
   char* textbuffer = new char[ n_blocks*DIMBLOCK ];
   char* size = new char[DIMBLOCK];
   char* spaces = new char[DIMBLOCK];
   char* words = new char[DIMBLOCK];
-  client.dm_block_map( 100, size );
-  client.dm_block_map( 101, spaces );
-  client.dm_block_map( 102, words );
+  int res = 0;
+  res += client.dm_block_map( 100, size );
+  res += client.dm_block_map( 101, spaces );
+  res += client.dm_block_map( 102, words );
   for (int i = 1; i <= n_blocks; ++i) {
     int offset = DIMBLOCK * (i-1);
-    client.dm_block_map( i, textbuffer+offset );
+    res += client.dm_block_map( i, textbuffer+offset );
+  }
+  if (res < 0) {
+    return 1;
   }
 
   // reads file and writes back to the server
   text.read(textbuffer, textsize);
   for (int i = 1; i <= n_blocks; ++i) {
-    client.dm_block_write( i );
+    if ( client.dm_block_write(i) < 0 ) {
+      return 1;
+    }
   }
 
+  // writes size
   *(int*) size = textsize;
-  client.dm_block_write( 100 );
-
-  *(int*) spaces = count_spaces(textbuffer, textsize);
-  client.dm_block_write( 101 );
-
-  while ( *(int*) words == 0 ) {
-    client.dm_block_wait( 102 );
-    client.dm_block_update( 102 );
+  if ( client.dm_block_write(100) < 0 ) {
+    return 1;
   }
 
-  cout << "Read " << textsize << " bytes" << endl;
-  cout << *(int*) spaces << " spaces" << endl;
-  cout << *(int*) words << " words" << endl;
+  // writes spaces
+  int nspaces = count_spaces(textbuffer, textsize);
+  *(int*) spaces = nspaces;
+  if ( client.dm_block_write(101) < 0 ) {
+    return 1;
+  }
 
-  // Reset
-  *(int*) size = 0;
-  *(int*) spaces = 0;
+  // waits for words
+  while ( *(int*) words == 0 ) {
+    if ( client.dm_block_wait(102) < 0 ) {
+      return 1;
+    }
+    if ( client.dm_block_update(102) < 0 ) {
+      return 1;
+    }
+  }
+  int nwords;
+  nwords = *(int*) words;
   *(int*) words = 0;
-  client.dm_block_write( 100 );
-  client.dm_block_write( 101 );
-  client.dm_block_write( 102 );
+  client.dm_block_write(102);
 
-  for (int i = 1; i < n_blocks; ++i) {
+  // prints result
+  cout << "Read " << textsize << " bytes" << endl;
+  cout << nspaces << " spaces" << endl;
+  cout << nwords << " words" << endl;
+
+  // close
+  for (int i = 1; i <= n_blocks; ++i) {
     client.dm_block_unmap( i );
   }
   client.dm_block_unmap( 100 );

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Test 10 times
+echo -n "Running test"
+for i in {1..10}
+do
+    ./reader1 dmconfig.yml sampletext.txt > reader1.log &
+    TEST1=$!
+    ./reader2 dmconfig.yml > reader2.log &
+    TEST2=$!
+
+    wait $TEST1
+    TEST1=$?
+    wait $TEST2
+    TEST2=$?
+
+    if [ $TEST1 != 0 ] || [ $TEST2 != 0 ]; then
+        echo -e "\nFAIL"
+        exit 1
+    fi
+
+    if diff reader*.log &> /dev/null; then
+        echo -n "."
+    else
+        echo -e "\nFAIL"
+        exit 1
+    fi
+    rm reader*.log
+done
+
+echo -e "\nOK"
+exit 0

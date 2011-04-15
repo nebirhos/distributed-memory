@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Launch the servers for the test
+
+function usage() {
+    echo "Usage: serverctl start|stop"
+}
+
+if [ $# = 0 ]; then
+    usage
+    exit
+fi
+
+case $1 in
+    start )
+        ../../bin/dmserver 127.0.0.1:5678 2>> server1.log &
+        ../../bin/dmserver 127.0.0.1:5679 2>> server2.log &
+        ;;
+    stop )
+        killall -2 dmserver
+        ;;
+    help )
+        usage
+        exit
+        ;;
+    * )
+        usage
+        exit 1
+esac
