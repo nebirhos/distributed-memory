@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <signal.h>
+#include <stdexcept>
 using namespace std;
 
 
@@ -20,8 +21,8 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, kill_handler);
     server->start();
   }
-  catch(...) {
-    cout << "Something nasty happened, exiting..." << endl;
+  catch(runtime_error e) {
+    cout << "Error: " << e.what() << ", exiting..." << endl;
     exit(1);
   }
   return 0;

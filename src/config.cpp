@@ -27,23 +27,28 @@ Config::Config(string filename) {
       servers[id.str()] = server;
     }
   }
-  catch(...) {
-    cout << "FIXME" << endl;
+  catch(YAML::Exception& e) {
+    servers.clear();
   }
 }
 
-ServerConf Config::find(string id) const {
-  if (servers.find(id) == servers.end() ) {
-    throw "FIXME";
-  }
-  return servers.find(id)->second;
+bool Config::is_valid() const {
+  return !servers.empty();
 }
 
-ServerMap Config::find_all() const {
+const ServerConf& Config::find(string id) const {
+  ServerMap::const_iterator it = servers.find(id);
+  if ( it == servers.end() ) {
+    return *(ServerConf*) NULL;
+  }
+  return it->second;
+}
+
+const ServerMap& Config::find_all() const {
   return servers;
 }
 
-string Config::find_server_id_by_block_id(int block_id) const {
+const string Config::find_server_id_by_block_id(int block_id) const {
   string result = "";
   for (ServerMap::const_iterator sit = servers.begin(); sit != servers.end(); sit++) {
     const vector<int>& blocks = sit->second.blocks_id;

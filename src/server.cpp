@@ -9,6 +9,7 @@
 #include <sstream>
 #include <cstring>
 #include "logger.h"
+#include <stdexcept>
 using namespace std;
 
 
@@ -17,8 +18,13 @@ namespace DM {
 Server::Server(string config_path, string id)
   : config(config_path),
     id(id) {
+  if ( !config.is_valid() ) {
+    throw runtime_error("configuration file '" + config_path + "' not valid");
+  }
+  if ( &config.find(id) == NULL ) {
+    throw runtime_error("server '" + id + "' not found in configuration");
+  }
   Logger::info() << "Distributed Memory server" << endl;
-  Logger::debug() << "configuration file dump:\n" << config << endl;
   const vector<int>& blocks_id = config.find(id).blocks_id;
   for (unsigned int i = 0; i < blocks_id.size(); ++i) {
     BlockServer b( blocks_id[i] );

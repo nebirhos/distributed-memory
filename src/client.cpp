@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <errno.h>
 #include <string.h>             // strerror
+#include <stdexcept>
 using namespace std;
 
 
@@ -16,6 +17,9 @@ Client::Client() : config("") {}
 
 void Client::dm_init(char* config_file) {
   config = Config(config_file);
+  if ( !config.is_valid() ) {
+    throw runtime_error("configuration file '" + string(config_file) + "' not valid");
+  }
 
   ServerMap servers = config.find_all();
   ServerMap::iterator it;
