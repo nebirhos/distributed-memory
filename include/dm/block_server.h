@@ -13,10 +13,11 @@ public:
   BlockServer(int id = 0);
   ~BlockServer();
   BlockServer(const BlockServer &);
+  BlockServer& operator=(const BlockServer &);
 
   int map(string client_id);
   int unmap(string client_id);
-  bool is_client_mapped(string client_id);
+  friend ostream& operator<<(ostream&, const BlockServer&);
 
 private:
   vector<string> mapped_clients;

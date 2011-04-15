@@ -11,9 +11,7 @@ BlockLocal::BlockLocal(int id, void* address)
 }
 
 BlockLocal& BlockLocal::operator=(const Block &b) {
-  m_id = b.id();
-  m_revision = b.revision();
-  memcpy(m_data, b.data(), M_SIZE);
+  Block::operator=(b);
   return *this;
 }
 

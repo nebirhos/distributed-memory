@@ -39,31 +39,14 @@ TEST(DM_BlockServer, setter) {
   }
 }
 
-TEST(DM_BlockServer, assignment) {
-  DM::BlockServer b1(123);
-  DM::BlockServer b2;
-  unsigned char* data = new unsigned char[b1.size()];
-  memset(data, 0xFF, b1.size());
-  b1.data(data);
-  delete[] data;
-
-  b2 = b1;
-  EXPECT_EQ( b1.id(), b2.id() );
-  EXPECT_EQ( b1.revision(), b2.revision() );
-  EXPECT_NE( b1.data(), b2.data() );
-  for (int i = 0; i < b1.size(); ++i) {
-    ASSERT_EQ( ((unsigned char*) b1.data())[i],
-               ((unsigned char*) b2.data())[i] );
-  }
-}
-
 TEST(DM_BlockServer, map) {
   DM::BlockServer b;
-  string client_id = "1.2.3.4:5678";
-  EXPECT_EQ( 0, b.map(client_id) );
-  EXPECT_NE( 0, b.map(client_id) );
-  EXPECT_EQ( true , b.is_client_mapped(client_id) );
-  EXPECT_NE( true , b.is_client_mapped("foo:bar") );
+  string client_id1 = "1.2.3.4:5678";
+  string client_id2 = "9.8.7.6:5432";
+  EXPECT_EQ( 0, b.map(client_id1) );
+  EXPECT_NE( 0, b.map(client_id1) );
+  EXPECT_EQ( 0, b.map(client_id2) );
+  EXPECT_NE( 0, b.map(client_id2) );
 }
 
 TEST(DM_BlockServer, unmap) {
@@ -74,8 +57,30 @@ TEST(DM_BlockServer, unmap) {
   b.map(client_id2);
   EXPECT_EQ( 0, b.unmap(client_id1) );
   EXPECT_NE( 0, b.unmap(client_id1) );
-  EXPECT_EQ( true , b.is_client_mapped(client_id2) );
-  EXPECT_NE( true , b.is_client_mapped(client_id1) );
+  EXPECT_EQ( 0, b.unmap(client_id2) );
+  EXPECT_NE( 0, b.unmap(client_id2) );
+}
+
+TEST(DM_BlockServer, assignment) {
+  DM::BlockServer b1(123);
+  DM::BlockServer b2;
+  unsigned char* data = new unsigned char[b1.size()];
+  memset(data, 0xFF, b1.size());
+  b1.data(data);
+  b1.map("i_cant_be_copied");
+  b2.map("i_must_stay");
+
+  b2 = b1;
+  EXPECT_EQ( b1.id(), b2.id() );
+  EXPECT_EQ( b1.revision(), b2.revision() );
+  EXPECT_NE( b1.data(), b2.data() );
+  for (int i = 0; i < b1.size(); ++i) {
+    ASSERT_EQ( ((unsigned char*) b1.data())[i],
+               ((unsigned char*) b2.data())[i] );
+  }
+  EXPECT_NE( 0, b2.unmap("i_cant_be_copied") );
+  EXPECT_EQ( 0, b2.unmap("i_must_stay") );
+  delete[] data;
 }
 
 TEST(DM_BlockServer, revision) {

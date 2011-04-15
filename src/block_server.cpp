@@ -22,8 +22,14 @@ BlockServer::BlockServer(const BlockServer& b)
   memcpy(m_data, b.m_data, M_SIZE);
 }
 
+BlockServer& BlockServer::operator=(const BlockServer &b) {
+  Block::operator=(b);
+  return *this;
+}
+
+
 int BlockServer::map(string client_id) {
-  if (!is_client_mapped(client_id)) {
+  if ( find_mapped_client(client_id) == mapped_clients.end() ) {
     mapped_clients.push_back(client_id);
     return 0;
   }
@@ -43,13 +49,17 @@ int BlockServer::unmap(string client_id) {
   }
 }
 
-bool BlockServer::is_client_mapped(string client_id) {
-  if (find_mapped_client(client_id) != mapped_clients.end()) {
-    return true;
+ostream& operator<<(ostream& out, const BlockServer& b) {
+  out << "b.id(): " << endl;
+  out << "BlockServer: {id: " << b.id();
+  out << ", revision: " << b.revision();
+  out << ", mapped_clients: [";
+  vector<string>::const_iterator it;
+  for (it = b.mapped_clients.begin(); it < b.mapped_clients.end(); ++it) {
+    out << *it << ", ";
   }
-  else {
-    return false;
-  }
+  out << "], " << "data: " << (char*) b.data() << "}";
+  return out;
 }
 
 vector<string>::iterator BlockServer::find_mapped_client(string client_id) {
