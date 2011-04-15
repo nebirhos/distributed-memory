@@ -62,7 +62,7 @@ int Client::dm_block_map(int id, void* address) {
   if (ack.type() == NACK)
     return -4;
 
-  blocks[id] = *( ack.block() );
+  blocks[id] = ack.block();
   return 0;
 }
 
@@ -121,9 +121,9 @@ int Client::dm_block_update(int id) {
     return -4;
 
   // updates only if local block is invalid
-  if (block.revision() != ack.block()->revision()) {
+  if (block.revision() != ack.block().revision()) {
     Logger::debug() << "before: " << block.revision() << endl; // FIXME
-    block = *( ack.block() );
+    block = ack.block();
     block.valid(true);
     Logger::debug() << "after: " << block.revision() << endl; // FIXME
   }

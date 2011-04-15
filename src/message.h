@@ -15,7 +15,7 @@ public:
   Message& parse(string message);
 
   MessageType type();
-  const Block* block();
+  const BlockServer& block();
 
   static const string STOP;     // token to mark end of message
   static string emit(MessageType);
@@ -23,7 +23,7 @@ public:
 
 private:
   YAML::Node node;
-  Block* m_block;
+  BlockServer* m_block;
 
   static map<string,MessageType> string_to_type;
   static map<MessageType,string> type_to_string;

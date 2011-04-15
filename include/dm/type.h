@@ -32,7 +32,7 @@ enum MessageType {
   WAIT   = 5,
   ACK    = 6,
   NACK   = 7,
-  UNDEF  = -1
+  UNDEF  = 0
 };
 
 enum LogLevel {

@@ -2,6 +2,7 @@
 #include <message.h>
 #include <dm/block_server.h>
 #include <base64.h>
+#include <cstring>
 
 
 // Parsing
@@ -23,6 +24,12 @@ TEST(DM_Message, parse_type) {
   EXPECT_EQ( DM::NACK, p.parse("{type: NACK}").type() );
 }
 
+TEST(DM_Message, parse_notvalid) {
+  DM::Message p("invalid JSON syntax");
+  EXPECT_EQ( DM::UNDEF, p.type() );
+  EXPECT_EQ( NULL, &p.block() );
+}
+
 // Emitting
 TEST(DM_Message, emit) {
   EXPECT_STREQ( "{type: ACK}", DM::Message::emit(DM::ACK).c_str() );
@@ -36,7 +43,9 @@ TEST(DM_Message, emit_shallow_block) {
 }
 
 TEST(DM_Message, emit_block) {
-  char block_data[128] = "foo bar";
+  char block_data[DIMBLOCK];
+  memset(block_data, 'A', DIMBLOCK);
+  block_data[DIMBLOCK-1] = 0;
   int block_id = 1;
   int block_rev = 123;
   DM::MessageType msg_type = DM::MAP;
@@ -48,38 +57,29 @@ TEST(DM_Message, emit_block) {
 
   DM::Message p(emitted);
   EXPECT_EQ( msg_type, p.type() );
-  EXPECT_EQ( block_id, p.block()->id() );
-  EXPECT_EQ( block_rev, p.block()->revision() );
-  EXPECT_STREQ( block_data, (const char*) p.block()->data() );
+  EXPECT_EQ( block_id, p.block().id() );
+  EXPECT_EQ( block_rev, p.block().revision() );
+  EXPECT_STREQ( block_data, (const char*) p.block().data() );
 }
 
 TEST(DM_Message, emit_block_force_shallow) {
   DM::BlockServer block(1);
-  block.data("foo bar");
 
+  EXPECT_STRNE( "{type: MAP, block: {id: 1, revision: 0}}",
+                DM::Message::emit(DM::MAP, block, false).c_str() );
   EXPECT_STREQ( "{type: MAP, block: {id: 1, revision: 0}}",
                 DM::Message::emit(DM::MAP, block, true).c_str() );
 }
 
 TEST(DM_Message, emit_block_binary) {
-  char block_data[128];
-  unsigned int* ptr_data = (unsigned int*) block_data;
-  *(ptr_data)    = 65535u;
-  *(ptr_data+1)  = 65534u;
-  *(ptr_data+2)  = 65533u;
-
+  char block_data[DIMBLOCK];
   DM::BlockServer block(1);
   block.data( block_data );
 
   string emitted = DM::Message::emit(DM::MAP, block);
   DM::Message p(emitted);
 
-  ptr_data = (unsigned int*) p.block()->data();
-  ASSERT_EQ( 65535u, *(ptr_data) );
-  ASSERT_EQ( 65534u, *(ptr_data+1) );
-  ASSERT_EQ( 65533u, *(ptr_data+2) );
-
-  for (int i = 0; i < 128; ++i) {
-    ASSERT_EQ( block_data[i], ((char*)p.block()->data())[i] );
+  for (int i = 0; i < DIMBLOCK; ++i) {
+    ASSERT_EQ( block_data[i], ((char*)p.block().data())[i] );
   }
 }

@@ -50,12 +50,10 @@ Message& Message::parse(string message) {
     istringstream ss(message);
     YAML::Parser parser(ss);
     parser.GetNextDocument(node);
-    delete m_block;             // maybe there is already a block instatiated
+    delete m_block;             // maybe there's already a block instatiated
     m_block = NULL;
   }
-  catch(YAML::Exception& e) {
-    cout << e.what() << endl;   // FIXME
-  }
+  catch(YAML::Exception& e) {}  // FIXME
   return *this;
 }
 
@@ -63,29 +61,28 @@ MessageType Message::type() {
   try {
     string type;
     node["type"] >> type;
-    MessageType result = Message::string_to_type[type];
-    if (result == 0)
-      result = UNDEF;
-    return result;
+    return Message::string_to_type[type];
   }
   catch(YAML::Exception& e) {
     return UNDEF;
   }
 }
 
-const Block* Message::block() {
+const BlockServer& Message::block() {
   try {
     if (m_block == NULL) {
       int block_id;
       node["block"]["id"] >> block_id;
-      int revision;
+      m_block = new BlockServer( block_id );
+
       // revision key optional
       if ( const YAML::Node* nrev = node["block"].FindValue("revision") ) {
+        int revision;
         *nrev >> revision;
+        m_block->revision( revision );
       }
       // data key optional
       if ( const YAML::Node* ndata = node["block"].FindValue("data") ) {
-        m_block = new BlockServer( block_id );
         string block_data;
         *ndata >> block_data;
         char* buffer = new char[m_block->size()];
@@ -93,17 +90,10 @@ const Block* Message::block() {
         m_block->data( buffer );
         delete[] buffer;
       }
-      else {
-        m_block = new Block( block_id );
-      }
-      m_block->revision( revision );
     }
   }
-  catch(YAML::Exception& e) {
-    cout << "FIXME Message::block" << endl;
-    cout << e.what() << endl;
-  }
-  return m_block;
+  catch(YAML::Exception& e) {}  // FIXME
+  return *m_block;
 }
 
 string Message::emit(MessageType type) {

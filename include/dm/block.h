@@ -1,7 +1,7 @@
 #ifndef _DM_BLOCK_H_
 #define _DM_BLOCK_H_
 
-#include <dm/type.h>
+#include "type.h"
 #include <string>
 using namespace std;
 

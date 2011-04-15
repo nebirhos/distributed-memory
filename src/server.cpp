@@ -121,7 +121,7 @@ void Server::client_handler(int socket_d) {
 
       switch ( msg.type() ) {
       case MAP:
-        block_id = msg.block()->id();
+        block_id = msg.block().id();
         pthread_mutex_lock( &mutex );
         Logger::info() << client_id << " maps block #" << block_id << endl;
         it = blocks.find(block_id);
@@ -137,7 +137,7 @@ void Server::client_handler(int socket_d) {
         break;
 
       case UNMAP:
-        block_id = msg.block()->id();
+        block_id = msg.block().id();
         pthread_mutex_lock( &mutex );
         Logger::info() << client_id << " unmaps block #" << block_id << endl;
         it = blocks.find(block_id);
@@ -152,14 +152,14 @@ void Server::client_handler(int socket_d) {
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       case UPDATE:
-        block_id = msg.block()->id();
+        block_id = msg.block().id();
         pthread_mutex_lock( &mutex );
         Logger::info() << client_id << " updates block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
           Logger::debug() << "server data: ---" << (char*) it->second.data() << "---" << endl;
-          Logger::debug() << "client rev: " << msg.block()->revision() << " server rev: " << it->second.revision() << endl;
-          if ( msg.block()->revision() < it->second.revision() ) {
+          Logger::debug() << "client rev: " << msg.block().revision() << " server rev: " << it->second.revision() << endl;
+          if ( msg.block().revision() < it->second.revision() ) {
             Logger::debug() << "UPDATE sends entire block" << endl;
             ack = Message::emit(ACK, it->second) + Message::STOP;
           }
@@ -175,16 +175,16 @@ void Server::client_handler(int socket_d) {
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       case WRITE:
-        block_id = msg.block()->id();
+        block_id = msg.block().id();
         ack = Message::emit(NACK) + Message::STOP;
         pthread_mutex_lock( &mutex );
         Logger::info() << client_id << " writes block #" << block_id << endl;
         it = blocks.find(block_id);
         if (it != blocks.end()) {
-          Logger::debug() << " client block revision: " << msg.block()->revision() << endl;
+          Logger::debug() << " client block revision: " << msg.block().revision() << endl;
           Logger::debug() << " server block revision: " << it->second.revision() << endl;
-          if ( it->second.revision() == msg.block()->revision() ) {
-            it->second = *((BlockServer*)  msg.block());
+          if ( it->second.revision() == msg.block().revision() ) {
+            it->second = msg.block();
             it->second.add_revision();
             ack = Message::emit(ACK) + Message::STOP;
             Logger::debug() << " server block revision: " << it->second.revision() << endl;
@@ -196,12 +196,12 @@ void Server::client_handler(int socket_d) {
         send(socket_d, (void*) ack.c_str(), ack.size(), 0);
         break;
       case WAIT:
-        block_id = msg.block()->id();
+        block_id = msg.block().id();
         ack = Message::emit(ACK) + Message::STOP;
         pthread_mutex_lock( &mutex );
         it = blocks.find(block_id);
         if (it != blocks.end()) {
-          while ( it->second.revision() == msg.block()->revision() ) {
+          while ( it->second.revision() == msg.block().revision() ) {
             Logger::info() << client_id << " waits for block #" << block_id << endl;
             pthread_cond_wait( &blocks_wait[block_id], &mutex );
             Logger::info() << client_id << " stop waiting for block #" << block_id << endl;
