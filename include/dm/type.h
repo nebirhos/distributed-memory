@@ -6,7 +6,7 @@
 #define TCP_MAX_CONNECTIONS 64
 #define TCP_BUFFER_SIZE 1024
 #define TCP_TIMEOUT 20
-#define LOG_LEVEL LOG_DEBUG
+#define LOG_LEVEL LOG_INFO
 
 #include <string>
 #include <vector>
