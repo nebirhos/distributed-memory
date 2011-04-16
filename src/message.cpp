@@ -85,7 +85,7 @@ const BlockServer& Message::block() {
       if ( const YAML::Node* ndata = node["block"].FindValue("data") ) {
         string block_data;
         *ndata >> block_data;
-        char* buffer = new char[m_block->size()];
+        char* buffer = new char[m_block->size()+1]; // size+1 due to a bug in base64 decode
         base64::decode( block_data.c_str(), block_data.size(), buffer, m_block->size()+1 );
         m_block->data( buffer );
         delete[] buffer;
