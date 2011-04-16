@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // opens file and calculate number of blocks
+  // opens file and calculates number of blocks
   ifstream text( argv[2] );
   text.seekg (0, ios::end);
   int textsize = text.tellg();

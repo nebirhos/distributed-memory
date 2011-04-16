@@ -5,11 +5,14 @@
 A simplified distributed memory system for POSIX compliant systems
 written in C++. 
 
-The system involves a server application (dmserver) that offers a certain
-quantity of memory to the clients, and a static library to access this
-memory (libdm). Memory is arranged in blocks uniquely identified by a
-number. The number of blocks and servers is managed by a configuration
+The system involves a server application (*dmserver*) that offers a certain
+amount of memory to the clients, and a static library to access this
+memory (*libdm*).
+Memory is arranged in blocks uniquely identified by a number. The number
+of blocks, servers and their mapping are managed by a configuration
 file.
+Of course, server and client can run on different nodes on the
+network, and use JSON messages over TCP/IP for communication.
 
 See doc/progetto-unix2010.pdf for full specifications (in Italian).
 
@@ -18,7 +21,7 @@ See doc/progetto-unix2010.pdf for full specifications (in Italian).
 Just type
  $ make
 to compile all binaries. If everything goes fine, you should see two
-files in bin folder, *dmserver* and *libdm.a*.
+files in bin folder, <b>dmserver</b> and <b>libdm.a</b>.
 
 After creating a configuration file (see test/reader/dmconfig.yml for
 an example), launch the server with
@@ -31,7 +34,7 @@ To use the library in your C++ application include the header
  #include <dm/client.h>
 and add the static library to the compiler options, eg:
  g++ app.cpp -Lbin -ldm -o app
-For a complete interface usage see the documentation in doc/html
+For a complete interface usage see the documentation in doc/doxygen
 
 
 == Testing
@@ -40,6 +43,8 @@ to perform the overall test (as required by specifications), and
  $ make -C test/unit run
 to perform the unit tests.
 
+Tested on <b>Ubuntu 10.10 with kernel 2.6.35-28</b> and <b>Mac OS X 10.6.7</b>
+
 
 == Requirements
 * GCC with C stardard library
@@ -47,12 +52,13 @@ to perform the unit tests.
 
 
 == Dependencies
+External libraries used in this project:
 * {yaml-cpp v0.2.6}[http://code.google.com/p/yaml-cpp/]
-  configuration file parsing, communication protocol between servers
+  for configuration file and communication protocol
 * {Google Test v1.5.0}[http://code.google.com/p/googletest/]
   for unit testing
 * {base64 decode}[https://github.com/flow3r/base-encodings/]
-  for the decoding of binary data (still missing in yaml-cpp)
+  for decoding of binary data (still missing in yaml-cpp)
 
 
 == License
