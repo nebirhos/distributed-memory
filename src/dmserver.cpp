@@ -29,7 +29,8 @@ int main(int argc, char *argv[]) {
 }
 
 void show_usage(int exit_code) {
-  cout << "Usage: dmserver [options] ip:port" << endl;
+  cout << "Usage: dmserver [OPTIONS] -i IP:PORT" << endl;
+  cout << "    -i        IP:PORT of this server" << endl;
   cout << "    -c        specify configuration file path (default: dmconfig.yml)" << endl;
   cout << "    -h        print this help" << endl;
   exit(exit_code);
@@ -37,28 +38,22 @@ void show_usage(int exit_code) {
 
 void parse_args(int argc, char* argv[]) {
   int c;
-  while ( (c = getopt(argc, argv, "-c:h")) != -1 ) {
+  while ( (c = getopt(argc, argv, "-c:i:h")) != -1 ) {
     switch (c) {
       case 'c':
         config_path = optarg;
         break;
       case 'h':
         show_usage(0);
-      case '\1':
-        if (server_id.empty()) {
-          server_id = optarg;
-        }
-        else {
-          cout << argv[0] << ": too many arguments" << endl;
-          show_usage(1);
-        }
+      case 'i':
+        server_id = optarg;
         break;
       default:
         show_usage(1);
     }
   }
   if (server_id.empty()) {
-    cout << "argument 'ip:port' required" << endl;
+    cout << "argument -i IP:PORT required" << endl;
     show_usage(1);
   }
 }

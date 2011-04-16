@@ -13,8 +13,8 @@ fi
 
 case $1 in
     start )
-        ../../bin/dmserver 127.0.0.1:5678 2>> server1.log &
-        ../../bin/dmserver 127.0.0.1:5679 2>> server2.log &
+        ../../bin/dmserver -i 127.0.0.1:5678 2>> server1.log &
+        ../../bin/dmserver -i 127.0.0.1:5679 2>> server2.log &
         ;;
     stop )
         killall -2 dmserver

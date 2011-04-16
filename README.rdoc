@@ -22,7 +22,7 @@ files in bin folder, *dmserver* and *libdm.a*.
 
 After creating a configuration file (see test/reader/dmconfig.yml for
 an example), launch the server with
- $ dmserver ip:port
+ $ dmserver -i ip:port
 where ip:port is the server id as specified in the configuration file.
 
 
