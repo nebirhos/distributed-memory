@@ -34,7 +34,7 @@ To use the library in your C++ application include the header
  #include <dm/client.h>
 and add the static library to the compiler options, eg:
  g++ app.cpp -Lbin -ldm -o app
-For a complete interface usage see the documentation in doc/doxygen
+For a complete interface usage see the documentation.
 
 
 == Testing
@@ -43,12 +43,21 @@ to perform the overall test (as required by specifications), and
  $ make -C test/unit run
 to perform the unit tests.
 
-Tested on <b>Ubuntu 10.10 with kernel 2.6.35-28</b> and <b>Mac OS X 10.6.7</b>
+Tested on <b>Ubuntu 10.10 with kernel 2.6.35-28</b> and <b>Mac OS X
+10.6.7</b>
+
+
+== Documentation
+Documentation is created using Doxygen. Type
+ $ make documentation
+to compile html and latex pages in doc/doxygen
+
 
 
 == Requirements
 * GCC with C stardard library
 * pthread library
+* Doxygen for documentation
 
 
 == Dependencies
