@@ -39,6 +39,10 @@ Server::Server(string config_path, string id)
 
 void Server::start() {
   listen_socket = open_socket();
+  if (listen_socket < 0) {
+    stop();
+    return;
+  }
   Logger::info() << "dmserver started" << endl;
 
   while (1) {
@@ -87,12 +91,12 @@ int Server::open_socket() {
   freeaddrinfo(server_addrinfo);
   if (p == NULL) {
     Logger::error() << "cannot open listening socket on port " << port << endl;
-    throw runtime_error("");
+    return -1;
   }
 
   if (listen( sockfd, TCP_MAX_CONNECTIONS ) < 0) {
     Logger::error() << "cannot listen on port " << port << endl;
-    throw runtime_error("");
+    return -1;
   }
   Logger::info() << "listening on port " << port << endl;
   return sockfd;
