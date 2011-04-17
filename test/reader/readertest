@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# FIXME: wait for servers to start
+sleep 0.5
+
 # Test 10 times
 echo -n "Running test"
 for i in {1..10}
