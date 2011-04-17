@@ -15,6 +15,7 @@ namespace DM {
 
 Client::Client() : config("") {}
 
+
 void Client::dm_init(char* config_file) {
   config = Config(config_file);
   if ( !config.is_valid() ) {
@@ -31,6 +32,7 @@ void Client::dm_init(char* config_file) {
     server_sockets[it->first] = sockfd;
   }
 }
+
 
 int Client::dm_block_map(int id, void* address) {
   string server_id = config.find_server_id_by_block_id(id);
@@ -69,6 +71,7 @@ int Client::dm_block_map(int id, void* address) {
   return 0;
 }
 
+
 int Client::dm_block_unmap(int id) {
   string server_id = config.find_server_id_by_block_id(id);
   if ( server_id.empty() ) {
@@ -103,6 +106,7 @@ int Client::dm_block_unmap(int id) {
   blocks.erase(it);
   return 0;
 }
+
 
 int Client::dm_block_update(int id) {
   string server_id = config.find_server_id_by_block_id(id);
@@ -145,6 +149,7 @@ int Client::dm_block_update(int id) {
   return 0;
 }
 
+
 int Client::dm_block_write(int id) {
   string server_id = config.find_server_id_by_block_id(id);
   if ( server_id.empty() ) {
@@ -179,13 +184,14 @@ int Client::dm_block_write(int id) {
   Message ack( req );
   if (ack.type() == NACK) {
     block.valid(false);
-    Logger::debug() << "NACK received writing block #" << id << endl;
+    Logger::debug() << "writing failed for block #" << id << endl;
     return -5;
   }
 
   block.add_revision();
   return 0;
 }
+
 
 int Client::dm_block_wait(int id) {
   string server_id = config.find_server_id_by_block_id(id);
@@ -221,12 +227,13 @@ int Client::dm_block_wait(int id) {
   Message ack( req );
   if (ack.type() == NACK) {
     Logger::debug() << "NACK received waiting block #" << id << endl;
-    return -4;
+    return -5;
   }
 
   block.valid(false);
   return 0;
 }
+
 
 int Client::open_socket(string ip, string port) {
   Logger::debug() << "connects to " << ip << ":" << port << endl;
@@ -264,6 +271,7 @@ int Client::open_socket(string ip, string port) {
   return sockfd;
 }
 
+
 int Client::send_socket(int sockfd, string message) {
   int result = send( sockfd, (void*) message.c_str(), message.size(), 0 );
   if (result < 0) {
@@ -271,6 +279,7 @@ int Client::send_socket(int sockfd, string message) {
   }
   return result;
 }
+
 
 string Client::receive_socket(int sockfd) {
   char buffer[TCP_BUFFER_SIZE];
