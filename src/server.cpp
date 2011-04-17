@@ -1,3 +1,9 @@
+/**
+ * @author Francesco Disperati
+ *
+ * Released under GNU GPLv3 (http://www.gnu.org/licenses/gpl-3.0.txt)
+ */
+
 #include "server.h"
 #include "message.h"
 #include <sys/types.h>

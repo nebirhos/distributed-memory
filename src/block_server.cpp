@@ -1,3 +1,9 @@
+/**
+ * @author Francesco Disperati
+ *
+ * Released under GNU GPLv3 (http://www.gnu.org/licenses/gpl-3.0.txt)
+ */
+
 #include <dm/block_server.h>
 #include <iostream>
 #include <cstring>
