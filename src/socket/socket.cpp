@@ -4,7 +4,7 @@
  * Released under GNU GPLv3 (http://www.gnu.org/licenses/gpl-3.0.txt)
  */
 
-#include "socket.h"
+#include <dm/socket/socket.h>
 #include "../logger.h"
 #include <cstring>
 #include <cerrno>
@@ -50,7 +50,7 @@ bool Socket::open_server(const string host, const string port) {
   freeaddrinfo(server_addrinfo);
 
   if (p == NULL) {
-    DM::Logger::error() << "cannot open listening socket on port " << port << endl;
+    Logger::error() << "cannot open listening socket on port " << port << endl;
     close();
     return false;
   }
@@ -74,12 +74,12 @@ bool Socket::open_client(const string host, const string port) {
   getaddrinfo( host.c_str(), port.c_str(), &m_hints, &server_addrinfo );
   for (p = server_addrinfo; p != NULL; p = p->ai_next) {
     if ((m_sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
-      Logger::debug() << "error on socket()" << endl;
+      Logger::debug() << "error on socket(): " << strerror(errno) << endl;
       continue;
     }
     if (connect( m_sockfd, p->ai_addr, p->ai_addrlen ) < 0) {
       close();
-      Logger::debug() << "error on connect()" << endl;
+      Logger::debug() << "error on connect():" << strerror(errno) << endl;
       continue;
     }
     // if we reach this point we have a valid socket
@@ -92,7 +92,7 @@ bool Socket::open_client(const string host, const string port) {
   }
   freeaddrinfo(server_addrinfo);
 
-  // set socket TIMEOUT
+  // set socket TIMEOUT FIXME
   timeval timeout;
   timeout.tv_sec = TCP_TIMEOUT;
   timeout.tv_usec = 0;
@@ -105,13 +105,13 @@ bool Socket::open_client(const string host, const string port) {
 
 bool Socket::send(const char* data, int size) const {
   int status = ::send( m_sockfd, (void*) data, size, 0 );
-  return (status != -1);
+  return (status != -1);        // FIXME: log error
 }
 
 
 int Socket::recv(char* buffer, int maxsize) const {
   int size = ::recv( m_sockfd, (void*) buffer, maxsize, 0 );
-  return size;
+  return size;                  // FIXME: log error
 }
 
 

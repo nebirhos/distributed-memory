@@ -19,6 +19,7 @@ $(LIBRARY): $(OBJECTS)
                        message.o \
                        base64.o \
                        logger.o \
+                       socket/*.o \
                        block.o \
                        block_server.o \
                        block_local.o ../lib/yaml-cpp/src/*.o

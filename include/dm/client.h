@@ -39,6 +39,7 @@
 
 #include "config.h"
 #include "block_local.h"
+#include "socket/socket_client.h"
 #include <iostream>
 
 /** Distributed Memory interfaces and implementations */
@@ -65,6 +66,7 @@ namespace DM {
 class Client {
 public:
   Client();
+  ~Client();
 
   /**
    * Reads and parses configuration file and connects to
@@ -169,42 +171,10 @@ public:
 private:
   /** Configuration data */
   Config config;
-  /** Stores open sockets for each server */
-  map<string,int> server_sockets;
+  /** Stores communication sockets for each server */
+  map<string,SocketClient*> sockets;
   /** Stores local blocks */
   map<int,BlockLocal> blocks;
-
-  /**
-   * Open TCP connection to the server.
-   *
-   * @param ip address of server
-   * @param port listen port of server
-   *
-   * @return
-   *   -1 if fails. otherwise, socket file descriptor number
-   */
-  int open_socket(string, string);
-
-  /**
-   * Send string through socket.
-   *
-   * @param sockfd socked file descriptor to use
-   * @param message string to send
-   *
-   * @return
-   *   -1 if timeout occurs. otherwise, bytes sent
-   */
-  int send_socket(int, string);
-
-  /**
-   * Receive string data from socket.
-   *
-   * @param sockfd socked file descriptor to use
-   *
-   * @return
-   *   empty string if timeout occurs
-   */
-  string receive_socket(int);
 };
 
 } // namespace DM

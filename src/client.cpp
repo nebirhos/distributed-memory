@@ -8,11 +8,6 @@
 #include "logger.h"
 #include <dm/client.h>
 #include <dm/type.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <errno.h>
-#include <string.h>             // strerror
 #include <stdexcept>
 using namespace std;
 
@@ -20,6 +15,14 @@ using namespace std;
 namespace DM {
 
 Client::Client() : config("") {}
+
+
+Client::~Client() {
+  map<string,SocketClient*>::iterator it;
+  for (it = sockets.begin(); it != sockets.end(); ++it) {
+    delete it->second;
+  }
+}
 
 
 void Client::dm_init(char* config_file) {
@@ -31,11 +34,7 @@ void Client::dm_init(char* config_file) {
   ServerMap servers = config.find_all();
   ServerMap::iterator it;
   for (it = servers.begin(); it != servers.end(); ++it) {
-    int sockfd = open_socket(it->second.ip, it->second.port);
-    if (sockfd < 0) {
-      throw runtime_error("connection to server failed");
-    }
-    server_sockets[it->first] = sockfd;
+    sockets[it->first] = new SocketClient( it->second.ip, it->second.port );
   }
 }
 
@@ -50,8 +49,8 @@ int Client::dm_block_map(int id, void* address) {
     Logger::debug() << "block #" << id << " already mapped" << endl;
     return -2;
   }
-  int sockfd = server_sockets[server_id];
-  if ( sockfd <= 0 ) {
+  SocketClient& sock = *sockets[server_id];
+  if ( !sock.is_valid() ) {
     Logger::debug() << "socket not valid" << endl;
     return -3;
   }
@@ -60,11 +59,11 @@ int Client::dm_block_map(int id, void* address) {
   blocks.insert( pair<int,BlockLocal>(id,block) );
 
   string req = Message::emit(MAP, block, true) + Message::STOP;
-  if ( send_socket(sockfd, req) < 0 ) {
-    return -4;
+  try {
+    sock << req;
+    sock >> req;
   }
-  req = receive_socket(sockfd);
-  if ( req.empty() ) {
+  catch(runtime_error e) {
     return -4;
   }
   Message ack( req );
@@ -89,18 +88,18 @@ int Client::dm_block_unmap(int id) {
     Logger::debug() << "block #" << id << " not mapped" << endl;
     return -2;
   }
-  int sockfd = server_sockets[server_id];
-  if ( sockfd <= 0 ) {
+  SocketClient& sock = *sockets[server_id];
+  if ( !sock.is_valid() ) {
     Logger::debug() << "socket not valid" << endl;
     return -3;
   }
 
   string req = Message::emit(UNMAP, it->second, true) + Message::STOP;
-  if ( send_socket(sockfd, req) < 0 ) {
-    return -4;
+  try {
+    sock << req;
+    sock >> req;
   }
-  req = receive_socket(sockfd);
-  if (req.empty()) {
+  catch(runtime_error e) {
     return -4;
   }
   Message ack( req );
@@ -125,19 +124,19 @@ int Client::dm_block_update(int id) {
     Logger::debug() << "block #" << id << " not mapped" << endl;
     return -2;
   }
-  int sockfd = server_sockets[server_id];
-  if ( sockfd <= 0 ) {
+  SocketClient& sock = *sockets[server_id];
+  if ( !sock.is_valid() ) {
     Logger::debug() << "socket not valid" << endl;
     return -3;
   }
 
   BlockLocal& block = it->second;
   string req = Message::emit(UPDATE, block, true) + Message::STOP;
-  if ( send_socket(sockfd, req) < 0 ) {
-    return -4;
+  try {
+    sock << req;
+    sock >> req;
   }
-  req = receive_socket(sockfd);
-  if ( req.empty() ) {
+  catch(runtime_error e) {
     return -4;
   }
   Message ack( req );
@@ -167,8 +166,8 @@ int Client::dm_block_write(int id) {
     Logger::debug() << "block #" << id << " not mapped" << endl;
     return -2;
   }
-  int sockfd = server_sockets[server_id];
-  if ( sockfd <= 0 ) {
+  SocketClient& sock = *sockets[server_id];
+  if ( !sock.is_valid() ) {
     Logger::debug() << "socket not valid" << endl;
     return -3;
   }
@@ -180,11 +179,11 @@ int Client::dm_block_write(int id) {
   }
 
   string req = Message::emit(WRITE, block) + Message::STOP;
-  if ( send_socket(sockfd, req) < 0 ) {
-    return -4;
+  try {
+    sock << req;
+    sock >> req;
   }
-  req = receive_socket(sockfd);
-  if ( req.empty() ) {
+  catch(runtime_error e) {
     return -4;
   }
   Message ack( req );
@@ -210,8 +209,8 @@ int Client::dm_block_wait(int id) {
     Logger::debug() << "block #" << id << " not mapped" << endl;
     return -2;
   }
-  int sockfd = server_sockets[server_id];
-  if ( sockfd <= 0 ) {
+  SocketClient& sock = *sockets[server_id];
+  if ( !sock.is_valid() ) {
     Logger::debug() << "socket not valid" << endl;
     return -3;
   }
@@ -223,11 +222,11 @@ int Client::dm_block_wait(int id) {
   }
 
   string req = Message::emit(WAIT, block, true) + Message::STOP;
-  if ( send_socket(sockfd, req) < 0 ) {
-    return -4;
+  try {
+    sock << req;
+    sock >> req;
   }
-  req = receive_socket(sockfd);
-  if ( req.empty() ) {
+  catch(runtime_error e) {
     return -4;
   }
   Message ack( req );
@@ -238,72 +237,6 @@ int Client::dm_block_wait(int id) {
 
   block.valid(false);
   return 0;
-}
-
-
-int Client::open_socket(string ip, string port) {
-  Logger::debug() << "connects to " << ip << ":" << port << endl;
-  addrinfo hints = {0,0,0,0,0,0,0,0}; // all setted only to suppress warnings
-  addrinfo *server_addrinfo, *p;
-  int sockfd;
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  getaddrinfo( ip.c_str(), port.c_str(), &hints, &server_addrinfo );
-  for (p = server_addrinfo; p != NULL; p = p->ai_next) {
-    if ((sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
-      Logger::debug() << "error on socket()" << endl;
-      continue;
-    }
-    if (connect( sockfd, p->ai_addr, p->ai_addrlen ) < 0) {
-      close(sockfd);
-      Logger::debug() << "error on connect()" << endl;
-      continue;
-    }
-    // if we reach this point we have a valid socket
-    break;
-  }
-  if (p == NULL) {
-    Logger::debug() << "error connecting " << ip << ":" << port << ": " << strerror(errno) << endl;
-    sockfd = -1;
-  }
-  freeaddrinfo(server_addrinfo);
-  // set socket TIMEOUT
-  timeval timeout;
-  timeout.tv_sec = TCP_TIMEOUT;
-  timeout.tv_usec = 0;
-  int res = setsockopt( sockfd, SOL_SOCKET, SO_RCVTIMEO, (timeval*) &timeout, sizeof(timeval) );
-  res = setsockopt( sockfd, SOL_SOCKET, SO_SNDTIMEO, (timeval*) &timeout, sizeof(timeval) );
-
-  return sockfd;
-}
-
-
-int Client::send_socket(int sockfd, string message) {
-  int result = send( sockfd, (void*) message.c_str(), message.size(), 0 );
-  if (result < 0) {
-    Logger::debug() << "TIMEOUT send(): " << result << endl; 
-  }
-  return result;
-}
-
-
-string Client::receive_socket(int sockfd) {
-  char buffer[TCP_BUFFER_SIZE];
-  string message;
-  int size;
-  size_t token_stop;
-  do {
-    size = recv( sockfd, (void*) buffer, TCP_BUFFER_SIZE-1, 0 );
-    buffer[size] = 0;
-    message += buffer;
-    token_stop = message.find( Message::STOP );
-  } while ( (size > 0) && (token_stop == string::npos) );
-  if (size < 0) {
-    message.clear();
-    Logger::debug() << "TIMEOUT recv(): " << size << endl; 
-  }
-
-  return message;
 }
 
 } // namespace DM

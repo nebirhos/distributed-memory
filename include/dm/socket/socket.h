@@ -11,7 +11,9 @@
 
 #include <dm/type.h>
 #include <string>
-#include <netdb.h>    // getaddrinfo
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>              // getaddrinfo
 using namespace std;
 
 
