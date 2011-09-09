@@ -16,6 +16,8 @@ namespace DM {
 SocketClient::SocketClient( string host, string port ) {
   if ( ! open_client(host, port) ) 
     throw runtime_error( "Connection to server failed" );
+
+  set_timeout( TCP_TIMEOUT );
 }	
 
 

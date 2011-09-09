@@ -92,13 +92,6 @@ bool Socket::open_client(const string host, const string port) {
   }
   freeaddrinfo(server_addrinfo);
 
-  // set socket TIMEOUT FIXME
-  timeval timeout;
-  timeout.tv_sec = TCP_TIMEOUT;
-  timeout.tv_usec = 0;
-  int res = setsockopt( m_sockfd, SOL_SOCKET, SO_RCVTIMEO, (timeval*) &timeout, sizeof(timeval) );
-  res = setsockopt( m_sockfd, SOL_SOCKET, SO_SNDTIMEO, (timeval*) &timeout, sizeof(timeval) );
-
   return true;
 }
 
@@ -112,6 +105,15 @@ bool Socket::send(const char* data, int size) const {
 int Socket::recv(char* buffer, int maxsize) const {
   int size = ::recv( m_sockfd, (void*) buffer, maxsize, 0 );
   return size;                  // FIXME: log error
+}
+
+
+void Socket::set_timeout(int seconds) {
+  timeval timeout;
+  timeout.tv_sec = seconds;
+  timeout.tv_usec = 0;
+  int res = setsockopt( m_sockfd, SOL_SOCKET, SO_RCVTIMEO, (timeval*) &timeout, sizeof(timeval) );
+  res = setsockopt( m_sockfd, SOL_SOCKET, SO_SNDTIMEO, (timeval*) &timeout, sizeof(timeval) );
 }
 
 

@@ -30,6 +30,7 @@ public:
   bool send(const char* data, int size) const;
   int recv(char* buffer, int maxsize) const;
 
+  void set_timeout(int seconds);
   bool close();
 
   bool is_valid() const { return m_sockfd != -1; }
