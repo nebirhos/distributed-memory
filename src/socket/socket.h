@@ -25,8 +25,8 @@ public:
   bool open_server(const string host, const string port);
   bool open_client(const string host, const string port);
 
-  bool send(const string) const;
-  int recv(string&) const;
+  bool send(const char* data, int size) const;
+  int recv(char* buffer, int maxsize) const;
 
   bool close();
 

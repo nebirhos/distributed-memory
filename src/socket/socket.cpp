@@ -103,29 +103,15 @@ bool Socket::open_client(const string host, const string port) {
 }
 
 
-bool Socket::send(const string s) const {
-  int status = ::send( m_sockfd, s.c_str(), s.size(), 0 );
+bool Socket::send(const char* data, int size) const {
+  int status = ::send( m_sockfd, (void*) data, size, 0 );
   return (status != -1);
 }
 
 
-int Socket::recv(string& s) const {
-  char buffer[ TCP_BUFFER_SIZE ];
-  s.clear();
-
-  int size = ::recv( m_sockfd, (void*) buffer, TCP_BUFFER_SIZE-1, 0 );
-
-  if ( size < 0 ) {
-      return 0;
-  }
-  else if ( size == 0 ) {
-    return 0;
-  }
-  else {
-    buffer[size] = 0;
-    s = buffer;
-    return size;
-  }
+int Socket::recv(char* buffer, int maxsize) const {
+  int size = ::recv( m_sockfd, (void*) buffer, maxsize, 0 );
+  return size;
 }
 
 
