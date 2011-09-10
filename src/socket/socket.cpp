@@ -26,19 +26,15 @@ Socket::~Socket() {
 }
 
 
-bool Socket::open_server(const string host, const string port) {
+bool Socket::open_server(const string port) {
   addrinfo *server_addrinfo, *p, hints;
   memset( &hints, 0, sizeof(hints) );
   hints.ai_family = AF_INET; // FIXME: IPv6
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
-  if ( host.compare("*") == 0 ) {
-    getaddrinfo( NULL, port.c_str(), &hints, &server_addrinfo );
-  }
-  else {
-    getaddrinfo( host.c_str(), port.c_str(), &hints, &server_addrinfo );
-  }
+
+  getaddrinfo( NULL, port.c_str(), &hints, &server_addrinfo );
 
   for ( p = server_addrinfo; p != NULL; p = p->ai_next ) {
     if ((m_sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
@@ -78,6 +74,7 @@ bool Socket::open_client(const string host, const string port) {
   hints.ai_socktype = SOCK_STREAM;
 
   getaddrinfo( host.c_str(), port.c_str(), &hints, &server_addrinfo );
+
   for (p = server_addrinfo; p != NULL; p = p->ai_next) {
     if ((m_sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
       Logger::debug() << "error on socket(): " << strerror(errno) << endl;

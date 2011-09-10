@@ -24,7 +24,7 @@ public:
   Socket();
   virtual ~Socket();
 
-  bool open_server(const string host, const string port);
+  bool open_server(const string port);
   bool open_client(const string host, const string port);
 
   bool accept( Socket& ) const;

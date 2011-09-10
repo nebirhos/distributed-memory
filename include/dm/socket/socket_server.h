@@ -18,7 +18,7 @@ namespace DM {
 class SocketServer : public Socket {
 public:
 
-  SocketServer( string host, string port );
+  SocketServer( string port );
   SocketServer() {};
   virtual ~SocketServer() {};
 

@@ -12,8 +12,8 @@ using namespace std;
 
 namespace DM {
 
-SocketServer::SocketServer( string host, string port ) {
-  if ( ! open_server(host, port) )
+SocketServer::SocketServer( string port ) {
+  if ( ! open_server(port) )
     throw runtime_error( "Could not open listening socket" );
 }
 
