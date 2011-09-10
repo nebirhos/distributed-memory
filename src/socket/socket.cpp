@@ -8,14 +8,15 @@
 #include "../logger.h"
 #include <cstring>
 #include <cerrno>
+#include <arpa/inet.h>
 using namespace std;
 
 
 namespace DM {
 
 Socket::Socket()
-  : m_sockfd(-1) {
-  memset( &m_hints, 0, sizeof( m_hints ) );
+  : m_sockfd(-1),
+    m_peer_valid(false) {
   memset( &m_peer_addr, 0, sizeof( m_peer_addr ) );
 }
 
@@ -26,16 +27,17 @@ Socket::~Socket() {
 
 
 bool Socket::open_server(const string host, const string port) {
-  addrinfo *server_addrinfo, *p;
-  m_hints.ai_family = AF_UNSPEC;  // both IPv4 and IPv6
-  m_hints.ai_socktype = SOCK_STREAM;
-  m_hints.ai_flags = AI_PASSIVE;
+  addrinfo *server_addrinfo, *p, hints;
+  memset( &hints, 0, sizeof(hints) );
+  hints.ai_family = AF_INET; // FIXME: IPv6
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
 
   if ( host.compare("*") == 0 ) {
-    getaddrinfo( NULL, port.c_str(), &m_hints, &server_addrinfo );
+    getaddrinfo( NULL, port.c_str(), &hints, &server_addrinfo );
   }
   else {
-    getaddrinfo( host.c_str(), port.c_str(), &m_hints, &server_addrinfo );
+    getaddrinfo( host.c_str(), port.c_str(), &hints, &server_addrinfo );
   }
 
   for ( p = server_addrinfo; p != NULL; p = p->ai_next ) {
@@ -48,14 +50,15 @@ bool Socket::open_server(const string host, const string port) {
       Logger::debug() << "error on bind():" << strerror(errno) << endl;
       continue;
     }
+    // if we reach this point we have a valid socket
     break;
   }
-  freeaddrinfo(server_addrinfo);
   if (p == NULL) {
     Logger::error() << "could not open listening socket on port " << port << endl;
     close();
     return false;
   }
+  freeaddrinfo(server_addrinfo);
 
   if (listen( m_sockfd, TCP_MAX_CONNECTIONS ) < 0) {
     Logger::error() << "could not listen on port " << port << endl;
@@ -69,11 +72,12 @@ bool Socket::open_server(const string host, const string port) {
 
 
 bool Socket::open_client(const string host, const string port) {
-  addrinfo *server_addrinfo, *p;
-  m_hints.ai_family = AF_UNSPEC;
-  m_hints.ai_socktype = SOCK_STREAM;
+  addrinfo *server_addrinfo, *p, hints;
+  memset( &hints, 0, sizeof(hints) );
+  hints.ai_family = AF_INET; // FIXME: IPv6
+  hints.ai_socktype = SOCK_STREAM;
 
-  getaddrinfo( host.c_str(), port.c_str(), &m_hints, &server_addrinfo );
+  getaddrinfo( host.c_str(), port.c_str(), &hints, &server_addrinfo );
   for (p = server_addrinfo; p != NULL; p = p->ai_next) {
     if ((m_sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
       Logger::debug() << "error on socket(): " << strerror(errno) << endl;
@@ -99,8 +103,7 @@ bool Socket::open_client(const string host, const string port) {
 
 
 bool Socket::accept( Socket& socket ) const {
-  int addr_length = sizeof( m_peer_addr );
-  socket.m_sockfd = ::accept( m_sockfd, (sockaddr *) &m_peer_addr, (socklen_t *) &addr_length );
+  socket.m_sockfd = ::accept( m_sockfd, NULL, NULL );
   return ( socket.m_sockfd > 0 );
 }
 
@@ -133,6 +136,31 @@ bool Socket::close() {
     return true;
   }
   return false;
+}
+
+
+string Socket::get_peer_ip() {
+  get_peer_addr();
+
+  char client_ip[ INET_ADDRSTRLEN ];
+  inet_ntop( AF_INET, &m_peer_addr, client_ip, sizeof(client_ip) );
+  return string( client_ip );
+}
+
+
+int Socket::get_peer_port() {
+  get_peer_addr();
+
+  return (int) m_peer_addr.sin_port;
+}
+
+
+void Socket::get_peer_addr() {
+  if ( !m_peer_valid ) {
+    socklen_t addr_size = sizeof( m_peer_addr );
+    getpeername( m_sockfd, (sockaddr*) &m_peer_addr, &addr_size );
+    m_peer_valid = true;
+  }
 }
 
 } // namespace DM

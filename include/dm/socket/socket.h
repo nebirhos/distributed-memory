@@ -36,11 +36,16 @@ public:
   bool close();
 
   bool is_valid() const { return m_sockfd != -1; }
+  string get_peer_ip();
+  int get_peer_port();
 
 private:
   int m_sockfd;
-  addrinfo m_hints;
+  /** Contains info about destination address */
   sockaddr_in m_peer_addr;
+
+  bool m_peer_valid;
+  void get_peer_addr();
 };
 
 } // namespace DM
