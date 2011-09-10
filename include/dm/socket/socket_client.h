@@ -27,5 +27,5 @@ public:
 
 }
 
-#endif /* _DM_SOCKET_H_ */
+#endif /* _DM_SOCKET_CLIENT_H_ */
 

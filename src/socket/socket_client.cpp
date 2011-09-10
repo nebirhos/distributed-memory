@@ -5,7 +5,6 @@
  */
 
 #include <dm/socket/socket_client.h>
-#include "../logger.h"
 #include "../message.h"
 #include <stdexcept>
 using namespace std;
@@ -14,11 +13,11 @@ using namespace std;
 namespace DM {
 
 SocketClient::SocketClient( string host, string port ) {
-  if ( ! open_client(host, port) ) 
+  if ( ! open_client(host, port) )
     throw runtime_error( "Connection to server failed" );
 
   set_timeout( TCP_TIMEOUT );
-}	
+}
 
 
 const SocketClient& SocketClient::operator << ( const string& s ) const {
