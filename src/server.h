@@ -11,6 +11,7 @@
 
 #include <dm/config.h>
 #include <dm/block_server.h>
+#include <dm/socket/socket_server.h>
 #include <pthread.h>
 
 
@@ -36,6 +37,7 @@ public:
    *   - if server id is not found
    */
   Server(string config_path, string id);
+  ~Server();
 
   /** Opens listening socket and waits for connections */
   void start();
@@ -49,25 +51,19 @@ private:
   const string id;
   /** Stores managed blocks */
   map<int,BlockServer> blocks;
-  /** Listening socket file descriptor */
-  int listen_socket;
+  /** Listening socket */
+  SocketServer* listen_socket;
   /** Pthread mutex for critical sections */
   pthread_mutex_t mutex;
   /** Pthread condition for each block */
   map<int,pthread_cond_t> blocks_wait;
-
-  /**
-   * Open listening socket.
-   * @return socket file descriptor or -1 if fails
-   */
-  int open_socket();
 
   /** Structure to allocate arguments to pass to pthread */
   struct HandlerWrapperArgs {
     /** Pointer to server instance */
     Server* obj;
     /** socket for client communication */
-    int socket_d;
+    SocketServer* socket;
   };
   /**
    * Cause pthread expects a C-style function, we use this static method
@@ -75,15 +71,16 @@ private:
    */
   static void* client_handler_wrapper(void*);
   /** Actual body of pthread */
-  void client_handler(int socket_d);
+  void client_handler(SocketServer* socket);
 
   /**
-   * Gets connected client ip and port.
+   * Gets connected client id.
    *
-   * @param socket_d socket file descriptor
+   * @param socket SocketServer object
+   * @param port
    * @return client id (ip:port)
    */
-  string get_client_id(int);
+  string get_client_id(SocketServer&) const;
 };
 
 }

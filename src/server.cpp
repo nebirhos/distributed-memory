@@ -6,14 +6,7 @@
 
 #include "server.h"
 #include "message.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>      // getaddrinfo
-#include <netinet/in.h>
-#include <arpa/inet.h>  // inet_ntop
-#include <iostream>
 #include <sstream>
-#include <cstring>
 #include "logger.h"
 #include <stdexcept>
 using namespace std;
@@ -43,95 +36,67 @@ Server::Server(string config_path, string id)
   pthread_mutex_init(&mutex, 0);
 }
 
+Server::~Server() {
+  if (listen_socket) delete listen_socket;
+}
+
+
 void Server::start() {
-  listen_socket = open_socket();
-  if (listen_socket < 0) {
+  string port = config.find(id).port;
+  try {
+    listen_socket = new SocketServer( port.c_str() );
+  }
+  catch (runtime_error e) {
+    Logger::error() << e.what() << endl;
     stop();
     return;
   }
   Logger::info() << "dmserver started" << endl;
 
   while (1) {
-    sockaddr_in client;
-    socklen_t addrlen = sizeof(sockaddr_in);
-    int socket_d = accept( listen_socket, (sockaddr*) &client, &addrlen );
-    if (socket_d < 0) {
+    SocketServer* new_socket = new SocketServer();
+    try {
+      listen_socket->accept( *new_socket );
+    }
+    catch (runtime_error e) {
       pthread_mutex_lock( &mutex );
-      Logger::error() << "cannot connect to client" << endl;
+      Logger::error() << e.what() << endl;
       pthread_mutex_unlock( &mutex );
       continue;
     }
+
     pthread_t tid;
     HandlerWrapperArgs* args = new HandlerWrapperArgs;
     args->obj = this;
-    args->socket_d = socket_d;
+    args->socket = new_socket;
     pthread_create( &tid, 0, &Server::client_handler_wrapper, (void*) args );
   }
 }
 
 void Server::stop() {
-  close(listen_socket);
+  delete listen_socket;
   Logger::info() << "dmserver stopped\n" << endl;
-}
-
-int Server::open_socket() {
-  addrinfo hints = {0,0,0,0,0,0,0,0}; // all setted only to suppress warnings
-  addrinfo *server_addrinfo, *p;
-  int sockfd;
-  string port = config.find(id).port;
-  hints.ai_family = AF_UNSPEC;  // both IPv4 and IPv6
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
-
-  getaddrinfo(NULL, port.c_str(), &hints, &server_addrinfo);
-  for ( p = server_addrinfo; p != NULL; p = p->ai_next ) {
-    if ((sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
-      continue;
-    }
-    if (bind( sockfd, p->ai_addr, p->ai_addrlen ) < 0) {
-      close(sockfd);
-      continue;
-    }
-    break;
-  }
-  freeaddrinfo(server_addrinfo);
-  if (p == NULL) {
-    Logger::error() << "cannot open listening socket on port " << port << endl;
-    return -1;
-  }
-
-  if (listen( sockfd, TCP_MAX_CONNECTIONS ) < 0) {
-    Logger::error() << "cannot listen on port " << port << endl;
-    return -1;
-  }
-  Logger::info() << "listening on port " << port << endl;
-  return sockfd;
 }
 
 void* Server::client_handler_wrapper(void* args) {
   HandlerWrapperArgs* wargs = (HandlerWrapperArgs*) args;
-  wargs->obj->client_handler(wargs->socket_d);
+  wargs->obj->client_handler(wargs->socket);
   delete wargs;
   return 0;
 }
 
-void Server::client_handler(int socket_d) {
+void Server::client_handler(SocketServer* socket) {
   pthread_detach( pthread_self() );
-  string client_id = get_client_id(socket_d);
+  string client_id = get_client_id( *socket );
   Logger::info() << client_id << " connected" << endl;
-  Logger::debug() << client_id << " on socket " << socket_d << endl;
 
-  char buffer[TCP_BUFFER_SIZE];
   string message;
-  int size = 0;
-  do {
-    size = recv( socket_d, (void*) buffer, TCP_BUFFER_SIZE-1, 0 );
-    buffer[size] = 0;
-    message += buffer;
-
-    size_t token_stop = message.find( Message::STOP );
-    if (token_stop != string::npos) {
+  try {
+    while (true) {
+      (*socket) >> message;
+      if ( message.empty() ) break;
       Message msg(message);
+
       int block_id;
       string ack = Message::emit(NACK) + Message::STOP;
       map<int,BlockServer>::iterator it;
@@ -225,24 +190,25 @@ void Server::client_handler(int socket_d) {
         ack = Message::emit(NACK) + Message::STOP;
         break;
       }
-      send(socket_d, (void*) ack.c_str(), ack.size(), 0);
-      message.clear();
-    }
-  } while ( size != 0 );
+
+      (*socket) << ack;
+    } // end while
+  }
+  catch (runtime_error e) {
+    pthread_mutex_lock( &mutex );
+    Logger::error() << e.what() << endl;
+    pthread_mutex_unlock( &mutex );
+  }
+
   pthread_mutex_lock( &mutex );
   Logger::info() << client_id << " disconnected" << endl;
   pthread_mutex_unlock( &mutex );
-  close(socket_d);
+  delete socket;
 }
 
-string Server::get_client_id(int socket_d) {
-  sockaddr_in client;
-  socklen_t addrlen = sizeof(sockaddr_in);
-  getpeername(socket_d, (sockaddr*) &client, &addrlen);
-  char client_ip[16];
-  inet_ntop( AF_INET, &client.sin_addr.s_addr, client_ip, INET_ADDRSTRLEN );
+string Server::get_client_id( SocketServer& socket ) const {
   ostringstream client_id;
-  client_id << client_ip << ":" << client.sin_port;
+  client_id << socket.get_peer_ip() << ":" << socket.get_peer_port();
   return client_id.str();
 }
 
