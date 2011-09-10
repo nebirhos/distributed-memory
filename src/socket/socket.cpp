@@ -16,6 +16,7 @@ namespace DM {
 Socket::Socket()
   : m_sockfd(-1) {
   memset( &m_hints, 0, sizeof( m_hints ) );
+  memset( &m_peer_addr, 0, sizeof( m_peer_addr ) );
 }
 
 
@@ -39,24 +40,25 @@ bool Socket::open_server(const string host, const string port) {
 
   for ( p = server_addrinfo; p != NULL; p = p->ai_next ) {
     if ((m_sockfd = socket( p->ai_family, p->ai_socktype, p->ai_protocol )) < 0) {
+      Logger::debug() << "error on socket(): " << strerror(errno) << endl;
       continue;
     }
     if (bind( m_sockfd, p->ai_addr, p->ai_addrlen ) < 0) {
       close();
+      Logger::debug() << "error on bind():" << strerror(errno) << endl;
       continue;
     }
     break;
   }
   freeaddrinfo(server_addrinfo);
-
   if (p == NULL) {
-    Logger::error() << "cannot open listening socket on port " << port << endl;
+    Logger::error() << "could not open listening socket on port " << port << endl;
     close();
     return false;
   }
 
   if (listen( m_sockfd, TCP_MAX_CONNECTIONS ) < 0) {
-    Logger::error() << "cannot listen on port " << port << endl;
+    Logger::error() << "could not listen on port " << port << endl;
     close();
     return false;
   }
@@ -93,6 +95,13 @@ bool Socket::open_client(const string host, const string port) {
   freeaddrinfo(server_addrinfo);
 
   return true;
+}
+
+
+bool Socket::accept( Socket& socket ) const {
+  int addr_length = sizeof( m_peer_addr );
+  socket.m_sockfd = ::accept( m_sockfd, (sockaddr *) &m_peer_addr, (socklen_t *) &addr_length );
+  return ( socket.m_sockfd > 0 );
 }
 
 

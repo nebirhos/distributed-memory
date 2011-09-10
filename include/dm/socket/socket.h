@@ -27,6 +27,8 @@ public:
   bool open_server(const string host, const string port);
   bool open_client(const string host, const string port);
 
+  bool accept( Socket& ) const;
+
   bool send(const char* data, int size) const;
   int recv(char* buffer, int maxsize) const;
 
@@ -38,6 +40,7 @@ public:
 private:
   int m_sockfd;
   addrinfo m_hints;
+  sockaddr_in m_peer_addr;
 };
 
 } // namespace DM

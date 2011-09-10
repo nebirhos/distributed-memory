@@ -16,7 +16,17 @@ using namespace std;
 namespace DM {
 
 class SocketServer : public Socket {
-}
+public:
+
+  SocketServer( string host, string port );
+  SocketServer() {};
+  virtual ~SocketServer() {};
+
+  const SocketServer& operator << ( const string& ) const;
+  const SocketServer& operator >> ( string& ) const;
+
+  void accept( SocketServer& );
+};
 
 } // namespace DM
 
