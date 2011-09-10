@@ -140,7 +140,7 @@ string Socket::get_peer_ip() {
   get_peer_addr();
 
   char client_ip[ INET_ADDRSTRLEN ];
-  inet_ntop( AF_INET, &m_peer_addr, client_ip, sizeof(client_ip) );
+  inet_ntop( AF_INET, &m_peer_addr.sin_addr.s_addr, client_ip, sizeof(client_ip) );
   return string( client_ip );
 }
 
@@ -156,6 +156,7 @@ void Socket::get_peer_addr() {
   if ( !m_peer_valid ) {
     socklen_t addr_size = sizeof( m_peer_addr );
     getpeername( m_sockfd, (sockaddr*) &m_peer_addr, &addr_size );
+
     m_peer_valid = true;
   }
 }
