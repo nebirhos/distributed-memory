@@ -13,6 +13,7 @@ test: extlibraries bin
 	@echo Compiling tests...
 	$(MAKE) -C test/unit/
 	$(MAKE) -C test/reader/
+	$(MAKE) -C test/secure_socket/
 
 documentation:
 	doxygen doc/doxygen/config
@@ -25,3 +26,4 @@ clean:
 	$(MAKE) clean -C lib/gtest/
 	$(MAKE) clean -C test/unit/
 	$(MAKE) clean -C test/reader/
+	$(MAKE) clean -C test/secure_socket/
