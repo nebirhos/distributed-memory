@@ -107,7 +107,7 @@ bool Socket::accept( Socket& socket ) const {
 
 bool Socket::send(const char* data, int size) const {
   int status = ::send( m_sockfd, (void*) data, size, 0 );
-  return (status != -1);        // FIXME: log error
+  return ( status == size );    // FIXME: log error
 }
 
 
@@ -121,8 +121,8 @@ void Socket::set_timeout(int seconds) {
   timeval timeout;
   timeout.tv_sec = seconds;
   timeout.tv_usec = 0;
-  int res = setsockopt( m_sockfd, SOL_SOCKET, SO_RCVTIMEO, (timeval*) &timeout, sizeof(timeval) );
-  res = setsockopt( m_sockfd, SOL_SOCKET, SO_SNDTIMEO, (timeval*) &timeout, sizeof(timeval) );
+  setsockopt( m_sockfd, SOL_SOCKET, SO_RCVTIMEO, (timeval*) &timeout, sizeof(timeval) );
+  setsockopt( m_sockfd, SOL_SOCKET, SO_SNDTIMEO, (timeval*) &timeout, sizeof(timeval) );
 }
 
 
