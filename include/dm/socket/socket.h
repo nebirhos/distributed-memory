@@ -20,7 +20,7 @@ using namespace std;
 namespace DM {
 
 class Socket {
-public:
+protected:
   Socket();
   virtual ~Socket();
 
@@ -35,6 +35,7 @@ public:
   void set_timeout(int seconds);
   bool close();
 
+public:
   bool is_valid() const { return m_sockfd != -1; }
   string get_peer_ip();
   int get_peer_port();
