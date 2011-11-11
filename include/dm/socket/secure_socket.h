@@ -22,6 +22,7 @@ protected:
   SecureSocket();
   virtual ~SecureSocket();
 
+  bool open_server(const string port);
   bool open_client(const string host, const string port);
 
   bool accept( SecureSocket& ) const;
@@ -32,12 +33,18 @@ protected:
 private:
   EVP_PKEY* m_priv_key;
   EVP_PKEY* m_pub_key;
+  int m_keysize;
+
+  string m_passphrase;
+
+  void prompt_passphrase();
+  void choose_passphrase( int maxsize );
 
   bool load_privkey( const string path );
   bool load_pubkey( const string path );
 
-  void rsa_encrypt( const void* data, const void* buffer );
-  void rsa_decrypt( const void* data, const void* buffer );
+  bool rsa_encrypt( const void* data, const void* buffer );
+  bool rsa_decrypt( const void* data, const void* buffer );
 };
 
 }
