@@ -4,8 +4,8 @@ using namespace std;
 
 
 int main(int argc, char *argv[]) {
-  if ( argc != 4 ) {
-    cout << "Choose host port password!" << endl;
+  if ( argc != 3 ) {
+    cout << "Choose host and port!" << endl;
     return 1;
   }
 
