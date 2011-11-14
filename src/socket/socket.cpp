@@ -6,9 +6,12 @@
 
 #include <dm/socket/socket.h>
 #include "../logger.h"
+#include "../message.h"
+
 #include <cstring>
 #include <cerrno>
 #include <arpa/inet.h>
+#include <stdexcept>
 using namespace std;
 
 
@@ -133,6 +136,34 @@ bool Socket::close() {
     return true;
   }
   return false;
+}
+
+
+const Socket& Socket::operator << ( const string& s ) const {
+  if ( ! send( s.c_str(), s.size() ) )
+    throw runtime_error( "Could not send to socket" );
+
+  return *this;
+}
+
+
+const Socket& Socket::operator >> ( string& s ) const {
+  char buffer[ TCP_BUFFER_SIZE ];
+  string message;
+  int size;
+  size_t token_stop;
+  do {
+    size = recv( buffer, TCP_BUFFER_SIZE-1 );
+    buffer[size] = 0;
+    message += buffer;
+    token_stop = message.find( Message::STOP );
+  } while ( (size > 0) && (token_stop == string::npos) );
+
+  if (size < 0)
+    throw runtime_error( "Could not receive from socket" );
+
+  s = message;
+  return *this;
 }
 
 

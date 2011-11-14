@@ -36,6 +36,9 @@ protected:
   bool close();
 
 public:
+  const Socket& operator << ( const string& ) const;
+  const Socket& operator >> ( string& ) const;
+
   bool is_valid() const { return m_sockfd != -1; }
   string get_peer_ip();
   int get_peer_port();

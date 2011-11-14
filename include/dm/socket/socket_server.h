@@ -22,9 +22,6 @@ public:
   SocketServer() {};
   virtual ~SocketServer() {};
 
-  const SocketServer& operator << ( const string& ) const;
-  const SocketServer& operator >> ( string& ) const;
-
   void accept( SocketServer& );
 };
 

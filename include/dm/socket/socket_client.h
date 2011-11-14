@@ -20,9 +20,6 @@ public:
 
   SocketClient( string host, string port );
   virtual ~SocketClient(){};
-
-  const SocketClient& operator << ( const string& ) const;
-  const SocketClient& operator >> ( string& ) const;
 };
 
 }
