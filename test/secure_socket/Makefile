@@ -4,7 +4,7 @@ SOURCES = client.cpp server.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 CPPFLAGS += -I../../include/
 CXXFLAGS += -Wall -Wextra
-LDFLAGS += -L../../bin/ -ldm -lpthread -lssl -lcrypto
+LDFLAGS += -L../../bin/ -ldm -lpthread -lcrypto
 
 all: $(BIN)
 

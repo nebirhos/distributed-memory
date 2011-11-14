@@ -6,7 +6,7 @@ SOURCES = $(wildcard *.cpp) $(wildcard socket/*.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 CPPFLAGS += -I../lib/yaml-cpp/include/ -I../include/
 CXXFLAGS += -Wall -Wextra
-LDFLAGS += -L../lib/yaml-cpp/ -lyaml-cpp -lpthread -lssl -lcrypto
+LDFLAGS += -L../lib/yaml-cpp/ -lyaml-cpp -lpthread -lcrypto
 
 all: $(BIN) $(LIBRARY)
 
