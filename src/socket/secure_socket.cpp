@@ -8,6 +8,8 @@
 #include "../logger.h"
 
 #include <cstring>
+#include <stdexcept>
+#include <stdint.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/aes.h>
@@ -64,7 +66,8 @@ bool SecureSocket::open_client( const string host, const string port ) {
   }
 
   // M1: Request SEND
-  unsigned char message[ m_keysize ], encrypted[ m_keysize ];
+  unsigned char* message = new unsigned char[ m_keysize ];
+  unsigned char encrypted[ m_keysize ];
   int message_size = 2*EVP_MAX_KEY_LENGTH + m_passphrase.size();
 
   memcpy( message, nonce, EVP_MAX_KEY_LENGTH );
@@ -74,24 +77,26 @@ bool SecureSocket::open_client( const string host, const string port ) {
   int encrypted_size = RSA_public_encrypt( message_size, message, encrypted, m_pub_key->pkey.rsa, RSA_PKCS1_PADDING );
   if ( encrypted_size != m_keysize ) {
     Logger::debug() << "Error on M1 encryption" << endl;
+    delete[] message;
     return false;
   }
-  if ( ! Socket::send( (char*) encrypted, m_keysize ) ) {
+  if ( ! send( (char*) encrypted, m_keysize ) ) {
     Logger::debug() << "Error on M1 send" << endl;
+    delete[] message;
     return false;
   }
+  delete[] message;
 
   // M2: Response RECEIVE
   unsigned char* decrypted;
-  if ( ! Socket::recv( (char*) message, M2_ENC_SIZE ) ) {
-    Logger::debug() << "Error on M2 receive" << endl;
-    return false;
-  }
-  message_size = cipher( DECRYPT, message, M2_ENC_SIZE, &decrypted );
-  if ( (message_size != 2*EVP_MAX_KEY_LENGTH) ||
+  int decrypted_size = recv_cipher( decrypted );
+  // cout << "decrypted_size: " << decrypted_size << endl;
+  // cout << "2*EVP_MAX_KEY_LENGTH: " << 2*EVP_MAX_KEY_LENGTH << endl;
+  if ( (decrypted_size != 2*EVP_MAX_KEY_LENGTH) ||
        memcmp( decrypted, nonce, EVP_MAX_KEY_LENGTH ) ||
        memcmp( decrypted+EVP_MAX_KEY_LENGTH, m_session_key, EVP_MAX_KEY_LENGTH ) ) {
     Logger::debug() << "Error on M2 decryption" << endl;
+    delete[] decrypted;
     return false;
   }
 
@@ -104,11 +109,17 @@ bool SecureSocket::accept( SecureSocket& socket ) const {
   if ( ! Socket::accept(socket) )  return false;
 
   // M1: Request RECEIVE
-  unsigned char message[m_keysize], decrypted[m_keysize];
+  unsigned char message[ m_keysize ], decrypted[ m_keysize ];
   int message_size = 2*EVP_MAX_KEY_LENGTH + m_passphrase.size();
 
-  socket.Socket::recv( (char*) message, m_keysize );
+  int encrypted_size = socket.recv( (char*) message, m_keysize );
+  if ( encrypted_size <= 0 ) {
+    Logger::debug() << "Error on M1 receive" << endl;
+    return false;
+  }
+  // cout << "before RSA: " << endl;
   int decrypted_size = RSA_private_decrypt( m_keysize, message, decrypted, m_priv_key->pkey.rsa, RSA_PKCS1_PADDING );
+  // cout << "after RSA: " << endl;
   if ( decrypted_size != message_size ) {
     Logger::debug() << "Error on M1 decryption or wrong passphrase" << endl;
     return false;
@@ -120,45 +131,28 @@ bool SecureSocket::accept( SecureSocket& socket ) const {
   memcpy( socket.m_session_key, decrypted+EVP_MAX_KEY_LENGTH, EVP_MAX_KEY_LENGTH );
 
   // M2: Response SEND
-  unsigned char* encrypted;
-  int encrypted_size = socket.cipher( ENCRYPT, decrypted, 2*EVP_MAX_KEY_LENGTH, &encrypted );
-
-  if ( ! socket.Socket::send( (char*) encrypted, encrypted_size ) ) {
+  if ( ! socket.send_cipher( decrypted, 2*EVP_MAX_KEY_LENGTH ) ) {
     Logger::debug() << "Cannot send M2" << endl;
-    delete[] encrypted;
     return false;
   }
 
-  delete[] encrypted;
   return true;
 }
 
 
-int SecureSocket::cipher( int operation, const unsigned char* input, int in_size, unsigned char** output ) {
-  *output = new unsigned char[ in_size + AES_BLOCK_SIZE ];
+int SecureSocket::cipher( int operation, const unsigned char* input, int in_size, unsigned char*& output ) const {
+  output = new unsigned char[ in_size + AES_BLOCK_SIZE ];
   int out_size, pad_out_size;
 
   EVP_CIPHER_CTX ctx;
   EVP_CIPHER_CTX_init( &ctx );
 
   EVP_CipherInit_ex( &ctx, EVP_aes_256_cbc(), NULL, m_session_key, NULL, operation ); // FIXME: iv!!!
-  EVP_CipherUpdate( &ctx, *output, &out_size, input, in_size );
-  EVP_CipherFinal_ex( &ctx, (*output)+out_size, &pad_out_size );
+  EVP_CipherUpdate( &ctx, output, &out_size, input, in_size );
+  EVP_CipherFinal_ex( &ctx, output+out_size, &pad_out_size );
 
   EVP_CIPHER_CTX_cleanup( &ctx );
   return out_size + pad_out_size;
-}
-
-
-bool SecureSocket::send(const char* data, int size) const {
-  cout << "SecureSocket::send" << endl;
-  return Socket::send(data,size); // FIXME
-}
-
-
-int SecureSocket::recv(char* buffer, int maxsize) const {
-  cout << "SecureSocket::recv" << endl;
-  return Socket::recv(buffer,maxsize); // FIXME
 }
 
 
@@ -204,6 +198,77 @@ bool SecureSocket::load_privkey( const string path ) {
 
   if ( m_priv_key )  m_keysize = EVP_PKEY_size( m_priv_key );
   return ( m_priv_key != NULL );
+}
+
+
+bool SecureSocket::send_cipher(const unsigned char* data, int size) const {
+  // cout << "SecureSocket::send_cipher!" << endl;
+  unsigned char* encrypted;
+  // cout << "send_cipher: size: " << size << endl;
+  // cout << "data: " << data << endl;
+  int encrypted_size = cipher( ENCRYPT, data, size, encrypted );
+  // cout << "send_cipher: after cipher: " << encrypted_size << endl;
+
+  uint32_t pkt_size = encrypted_size;
+  if (
+      !Socket::send( (const char*) &pkt_size, sizeof(uint32_t) ) ||
+      !Socket::send( (const char*) encrypted, encrypted_size ) ) {
+    // cout << "suca! pkt_size: " << pkt_size << endl;
+    delete[] encrypted;
+    return false;
+  }
+  // cout << "pkt_size: " << pkt_size << endl;
+  delete[] encrypted;
+  return true;
+}
+
+
+int SecureSocket::recv_cipher(unsigned char*& data) const {
+  // cout << "SecureSocket::recv_cipher!" << endl;
+  uint32_t pkt_size;
+  if ( Socket::recv( (char*) &pkt_size, sizeof(uint32_t) ) != sizeof(uint32_t) ) {
+    // cout << "suca! recv pkt_size: " << pkt_size << endl;
+    return -1;
+  }
+  unsigned char *buffer = new unsigned char[ pkt_size ];
+
+  if ( Socket::recv( (char*) buffer, pkt_size ) != pkt_size ) {
+    delete[] buffer;
+    return -1;
+  }
+  // cout << "pkt_size: " << pkt_size << endl;
+  int decrypted_size = cipher( DECRYPT, buffer, pkt_size, data );
+  // cout << "decrypted_size: " << decrypted_size << endl;
+  // cout << "data: " << data << endl;
+  if ( decrypted_size < 0 ) {
+    delete[] buffer;
+    return -1;
+  }
+
+  delete[] buffer;
+  return decrypted_size;
+}
+
+
+const SecureSocket& SecureSocket::operator << ( const string& s ) const {
+  // cout << "SecureSocket <<" << endl;
+  if ( ! send_cipher( (unsigned char*) s.data(), s.size() ) )
+    throw runtime_error( "Could not send to secure socket" );
+
+  return *this;
+}
+
+
+const SecureSocket& SecureSocket::operator >> ( string& s ) const {
+  // cout << "SecureSocket >>" << endl;
+  unsigned char* buffer;
+  int size = recv_cipher(buffer);
+
+  if ( size < 0 )
+    throw runtime_error( "Could not receive from secure socket" );
+
+  s.assign( (char*) buffer, size );
+  return *this;
 }
 
 } // namespace DM

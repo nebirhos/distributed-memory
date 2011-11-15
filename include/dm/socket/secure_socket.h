@@ -11,7 +11,6 @@
 
 #define ENCRYPT       1
 #define DECRYPT       0
-#define M2_ENC_SIZE   2*EVP_MAX_KEY_LENGTH + AES_BLOCK_SIZE
 
 #include "socket.h"
 
@@ -22,6 +21,10 @@ using namespace std;
 namespace DM {
 
 class SecureSocket : public Socket {
+public:
+  const SecureSocket& operator << ( const string& ) const;
+  const SecureSocket& operator >> ( string& ) const;
+
 protected:
   SecureSocket();
   virtual ~SecureSocket();
@@ -31,8 +34,8 @@ protected:
 
   bool accept( SecureSocket& ) const;
 
-  bool send(const char* data, int size) const;
-  int recv(char* buffer, int maxsize) const;
+  bool send_cipher(const unsigned char* data, int size) const;
+  int recv_cipher(unsigned char*& buffer) const;
 
 private:
   EVP_PKEY* m_priv_key;
@@ -48,7 +51,7 @@ private:
   bool load_privkey( const string path );
   bool load_pubkey( const string path );
 
-  int cipher( int, const unsigned char*, int, unsigned char** );
+  int cipher( int, const unsigned char*, int, unsigned char*& ) const;
 };
 
 }
