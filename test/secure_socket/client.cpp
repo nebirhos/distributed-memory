@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 
   DM::SocketClient s( argv[1], argv[2] );
 
-  s << "fanculo!!!";
+  s << "The narwhal bacons at midnight";
 
   return 0;
 }

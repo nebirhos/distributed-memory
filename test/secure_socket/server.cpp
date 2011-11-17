@@ -1,5 +1,6 @@
 #include <dm/socket/socket_server.h>
 #include <iostream>
+#include <stdexcept>
 using namespace std;
 
 
@@ -13,7 +14,13 @@ int main(int argc, char *argv[]) {
 
   while (1) {
     DM::SocketServer* incoming = new DM::SocketServer();
-    listen.accept( *incoming );
+    try {
+      listen.accept( *incoming );
+    }
+    catch (runtime_error e) {
+      delete incoming;
+      continue;
+    }
 
     string message;
     (*incoming) >> message;
