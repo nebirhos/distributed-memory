@@ -62,6 +62,7 @@ void Server::start() {
       pthread_mutex_lock( &mutex );
       Logger::error() << e.what() << endl;
       pthread_mutex_unlock( &mutex );
+      delete new_socket;
       continue;
     }
 
