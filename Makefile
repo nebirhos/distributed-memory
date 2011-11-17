@@ -15,8 +15,10 @@ test: extlibraries bin
 	$(MAKE) -C test/reader/
 	$(MAKE) -C debug/secure_socket/
 
-debug: bin
-	$(MAKE) -C debug/secure_socket/ DEBUG_FLAG="-g"
+debug: clean extlibraries
+	@echo DEBUG mode enabled
+	$(MAKE) -C src/ DEBUG=true
+	$(MAKE) test
 
 documentation:
 	doxygen doc/doxygen/config

@@ -21,8 +21,6 @@
 #define TCP_BUFFER_SIZE 1024
 /** TCP timeout (seconds) for connections */
 #define TCP_TIMEOUT 20
-/** Level threshold of messages to log */
-#define LOG_LEVEL LOG_INFO
 
 #include <string>
 #include <vector>
@@ -73,7 +71,7 @@ enum MessageType {
  * Specifies priority levels for Logger. The items are in ascending priority.
  * If a message has a priority lower than LOG_LEVEL is discarded.
  *
- * @see LOG_LEVEL
+ * @see Makefile for LOG_LEVEL definition
  */
 enum LogLevel {
   LOG_DEBUG,                    /**< Debug and other needless infos */

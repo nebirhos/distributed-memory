@@ -8,6 +8,13 @@ CPPFLAGS += -I../lib/yaml-cpp/include/ -I../include/
 CXXFLAGS += -Wall -Wextra
 LDFLAGS += -L../lib/yaml-cpp/ -lyaml-cpp -lpthread -lcrypto
 
+ifdef DEBUG
+	CXXFLAGS += -g -DLOG_LEVEL=LOG_DEBUG
+else
+	CXXFLAGS += -O3 -DLOG_LEVEL=LOG_INFO
+endif
+
+
 all: $(BIN) $(LIBRARY)
 
 $(BIN): $(OBJECTS)
