@@ -4,7 +4,7 @@ SOURCES = reader1.cpp reader2.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 CPPFLAGS += -I../../include/
 CXXFLAGS += -Wall -Wextra
-LDFLAGS += -L../../bin/ -ldm -lpthread
+LDFLAGS += -L../../bin/ -ldm -lpthread -lcrypto
 
 all: $(BIN)
 

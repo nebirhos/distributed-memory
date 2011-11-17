@@ -7,7 +7,6 @@
 #include <dm/config.h>
 #include <yaml-cpp/yaml.h>
 #include <fstream>
-#include <sstream>
 #include <algorithm>
 using namespace std;
 
@@ -28,9 +27,11 @@ Config::Config(string filename) {
       server_conf["ip"] >> server.ip;
       server_conf["port"] >> server.port;
       server_conf["blocks"] >> server.blocks_id;
-      ostringstream id;
-      id << server.ip << ":" << server.port;
-      servers[id.str()] = server;
+      server_conf["pass"] >> server.pass;
+      server_conf["privkey"] >> server.privkey;
+      server_conf["pubkey"] >> server.pubkey;
+
+      servers[ server.ip + ":" + server.port ] = server;
     }
   }
   catch(YAML::Exception& e) {
@@ -71,9 +72,9 @@ ostream& operator<<(ostream& output, const Config& c) {
     const string server_id = it->first;
     const ServerConf& server = it->second;
     output << "Server " << server_id << endl;
-    output << "  ip:     " << server.ip << endl;
-    output << "  port:   " << server.port << endl;
-    output << "  blocks: [";
+    output << "  ip:      " << server.ip << endl;
+    output << "  port:    " << server.port << endl;
+    output << "  blocks:  [";
     for (unsigned int i = 0; i < server.blocks_id.size(); ++i) {
       output << server.blocks_id[i];
       if ( i < server.blocks_id.size() - 1 ) {
@@ -81,6 +82,9 @@ ostream& operator<<(ostream& output, const Config& c) {
       }
     }
     output << "]\n";
+    output << "  pass:    " << server.pass << endl;
+    output << "  privkey: " << server.privkey << endl;
+    output << "  pubkey:  " << server.pubkey << endl;
   }
   return output;
 }

@@ -11,14 +11,14 @@ using namespace std;
 
 namespace DM {
 
-SocketServer::SocketServer( string port ) {
-  if ( ! open_server(port) )
+SocketServer::SocketServer( const string port, const string privkey, const string pass ) {
+  if ( ! open_server(port, privkey, pass) )
     throw runtime_error( "Could not open listening socket" );
 }
 
 
 void SocketServer::accept( SocketServer& socket ) {
-  if ( ! Socket::accept( socket ) )
+  if ( ! SecureSocket::accept( socket ) )
     throw runtime_error( "Could not connect to client" );
 }
 

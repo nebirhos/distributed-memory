@@ -42,9 +42,9 @@ Server::~Server() {
 
 
 void Server::start() {
-  string port = config.find(id).port;
+  ServerConf conf = config.find(id);
   try {
-    listen_socket = new SocketServer( port.c_str() );
+    listen_socket = new SocketServer( conf.port, conf.privkey, conf.pass );
   }
   catch (runtime_error e) {
     Logger::error() << e.what() << endl;

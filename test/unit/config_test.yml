@@ -2,11 +2,20 @@
 - port: 123
   ip: 1.2.3.4
   blocks: [1, 3, 5]
+  pass: "a shared secret"
+  privkey: key.priv
+  pubkey: key.pub
 
 - port: 456
   ip: 1.2.3.4
   blocks: [2, 4, 6]
+  pass: nope
+  privkey: nope
+  pubkey: nope
 
 - port: 789
   ip: www.foo.com
   blocks: [70, 800, 900, 100]
+  pass:
+  privkey:
+  pubkey:

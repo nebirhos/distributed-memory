@@ -22,15 +22,21 @@ namespace DM {
  * Reads and stores the configuration file data.
  * The file is written using YAML syntax and MUST have
  * these keys for each server:
- *   - ip:     ip or canonical address of server
- *   - port:   port of server (number or service name)
- *   - blocks: list of block ids for that server
+ *   - ip:      ip or canonical address of server
+ *   - port:    port of server (number or service name)
+ *   - blocks:  list of block ids for that server
+ *   - pass:    secret passphrase for client authentication
+ *   - privkey: path to the RSA private key
+ *   - pubkey:  path to the RSA public key
  *
  * Example:
 @verbatim
   port: http
   ip: localhost
   blocks: [1, 2, 3]
+  pass: "A shared secret"
+  privkey: ~/.ssh/id.priv
+  pubkey:  ~/.ssh/id.pub
 @endverbatim
  *
  * references:

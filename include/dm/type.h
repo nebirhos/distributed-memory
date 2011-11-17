@@ -40,6 +40,12 @@ struct ServerConf {
   string port;
   /** vector of blocks number in the server */
   vector<int> blocks_id;
+  /** Secret passphrase for client authentication */
+  string pass;
+  /** RSA private key path */
+  string privkey;
+  /** RSA public key path */
+  string pubkey;
 };
 
 /**

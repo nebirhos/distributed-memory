@@ -29,8 +29,8 @@ protected:
   SecureSocket();
   virtual ~SecureSocket();
 
-  bool open_server(const string port);
-  bool open_client(const string host, const string port);
+  bool open_server(const string port, const string privkey, const string pass);
+  bool open_client(const string host, const string port, const string pubkey, const string pass);
 
   bool accept( SecureSocket& ) const;
 
@@ -44,9 +44,6 @@ private:
   unsigned char m_session_key[ EVP_MAX_KEY_LENGTH ];
 
   string m_passphrase;
-
-  void prompt_passphrase();
-  void choose_passphrase( int maxsize );
 
   bool load_privkey( const string path );
   bool load_pubkey( const string path );

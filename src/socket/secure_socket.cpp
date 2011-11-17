@@ -29,27 +29,34 @@ SecureSocket::~SecureSocket() {
 }
 
 
-bool SecureSocket::open_server( const string port ) {
+bool SecureSocket::open_server( const string port, const string privkey, const string pass ) {
   if ( ! Socket::open_server(port) ) return false;
 
-  if ( ! load_privkey("serverkey.priv") ) { // FIXME
-    Logger::debug() << "Cannot load RSA private key" << endl;
+  if ( ! load_privkey(privkey) ) {
+    Logger::error() << "Cannot load RSA private key" << endl;
     return false;
   }
 
-  choose_passphrase( m_keysize - 2*EVP_MAX_KEY_LENGTH );
+  if ( pass.size() > m_keysize - 2*EVP_MAX_KEY_LENGTH ) {
+    Logger::error() << "Passphrase too long! Max allowed length is " << m_keysize - 2*EVP_MAX_KEY_LENGTH << " characters " << endl;
+    return false;
+  }
+  else {
+    m_passphrase = pass;
+  }
+
   return true;
 }
 
 
-bool SecureSocket::open_client( const string host, const string port ) {
+bool SecureSocket::open_client( const string host, const string port, const string pubkey, const string pass ) {
   if ( ! Socket::open_client(host, port) ) return false;
 
-  if ( ! load_pubkey("serverkey.pub") ) { // FIXME
-    Logger::debug() << "Cannot load RSA public key" << endl;
+  if ( ! load_pubkey(pubkey) ) {
+    Logger::error() << "Cannot load RSA public key" << endl;
     return false;
   }
-  prompt_passphrase();
+  m_passphrase = pass;
 
   // SESSION KEY GENERATION
   int rounds = 5;
@@ -153,29 +160,6 @@ int SecureSocket::cipher( int operation, const unsigned char* input, int in_size
 
   EVP_CIPHER_CTX_cleanup( &ctx );
   return out_size + pad_out_size;
-}
-
-
-void SecureSocket::prompt_passphrase() {
-  cout << "Insert passphrase: ";
-  system( "stty -echo" );       // FIXME
-  getline( cin, m_passphrase );
-  system( "stty echo" );
-  cout << endl;
-  cout << "m_passphrase: " << m_passphrase << endl;
-}
-
-
-void SecureSocket::choose_passphrase( int maxsize ) {
-  string pass, pass_confirm;
-  do {
-    cout << "Choose a passphrase (max. " << maxsize << " characters): ";
-    getline( cin, pass );
-    cout << "Retype your passphrase: ";
-    getline( cin, pass_confirm );
-  } while ( pass.compare(pass_confirm) || (pass.size() > maxsize) );
-
-  m_passphrase = pass;
 }
 
 

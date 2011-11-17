@@ -5,12 +5,12 @@ using namespace std;
 
 
 int main(int argc, char *argv[]) {
-  if ( argc != 2 ) {
-    cout << "Choose a port!" << endl;
+  if ( argc != 4 ) {
+    cout << "Choose [port] [rsa private key] [passphrase]!" << endl;
     return 1;
   }
 
-  DM::SocketServer listen( argv[1] );
+  DM::SocketServer listen( argv[1], argv[2], argv[3] );
 
   while (1) {
     DM::SocketServer* incoming = new DM::SocketServer();

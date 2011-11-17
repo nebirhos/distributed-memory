@@ -34,7 +34,7 @@ void Client::dm_init(char* config_file) {
   ServerMap servers = config.find_all();
   ServerMap::iterator it;
   for (it = servers.begin(); it != servers.end(); ++it) {
-    sockets[it->first] = new SocketClient( it->second.ip, it->second.port );
+    sockets[it->first] = new SocketClient( it->second.ip, it->second.port, it->second.pubkey, it->second.pass );
   }
 }
 

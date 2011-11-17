@@ -11,8 +11,8 @@ using namespace std;
 
 namespace DM {
 
-SocketClient::SocketClient( string host, string port ) {
-  if ( ! open_client(host, port) )
+SocketClient::SocketClient( const string host, const string port, const string pubkey, const string pass ) {
+  if ( ! open_client(host, port, pubkey, pass) )
     throw runtime_error( "Connection to server failed" );
 
   set_timeout( TCP_TIMEOUT );

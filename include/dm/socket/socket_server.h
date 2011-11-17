@@ -9,16 +9,16 @@
 #ifndef _DM_SOCKET_SERVER_H_
 #define _DM_SOCKET_SERVER_H_
 
-#include "socket.h"
+#include "secure_socket.h"
 using namespace std;
 
 
 namespace DM {
 
-class SocketServer : public Socket {
+class SocketServer : public SecureSocket {
 public:
 
-  SocketServer( string port );
+  SocketServer( const string port, const string privkey, const string pass );
   SocketServer() {};
   virtual ~SocketServer() {};
 
