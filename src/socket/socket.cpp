@@ -1,5 +1,5 @@
 /**
- * @author Francesco Disperati
+ * @authors Francesco Disperati, Alessio Celli
  *
  * Released under GNU GPLv3 (http://www.gnu.org/licenses/gpl-3.0.txt)
  */
@@ -158,6 +158,9 @@ const Socket& Socket::operator >> ( string& s ) const {
     message += buffer;
     token_stop = message.find( Message::STOP );
   } while ( (size > 0) && (token_stop == string::npos) );
+
+  if ( size == 0 )
+    throw runtime_error( "Peer disconnected" );
 
   if (size < 0)
     throw runtime_error( "Could not receive from socket" );

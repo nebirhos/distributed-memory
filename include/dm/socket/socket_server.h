@@ -1,7 +1,7 @@
 /**
  * @file socket_server.h
  *
- * @author Francesco Disperati
+ * @authors Francesco Disperati, Alessio Celli
  *
  * Released under GNU GPLv3 (http://www.gnu.org/licenses/gpl-3.0.txt)
  */

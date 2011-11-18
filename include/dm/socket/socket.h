@@ -1,7 +1,7 @@
 /**
  * @file socket.h
  *
- * @author Francesco Disperati
+ * @authors Francesco Disperati, Alessio Celli
  *
  * Released under GNU GPLv3 (http://www.gnu.org/licenses/gpl-3.0.txt)
  */
@@ -30,6 +30,11 @@ protected:
   bool accept( Socket& ) const;
 
   bool send(const char* data, int size) const;
+  /** Reads data from socket and puts in buffer.
+   * @return Bytes read or
+   *   - -1 on error
+   *   - 0 if other peer closes connection
+   */
   int recv(char* buffer, int maxsize) const;
 
   void set_timeout(int seconds);
