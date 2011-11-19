@@ -1,3 +1,4 @@
+* YAML::BinaryInput, delete base64decode is fucking broken!
 * list instead of vector?
 * mutex for client library?
 * list instead of map<int,Block>?
