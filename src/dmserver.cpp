@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, kill_handler);
     server->start();
   }
-  catch(runtime_error e) {
+  catch(const runtime_error& e) {
     cout << "Something nasty happened" << e.what() << ", exiting..." << endl;
     exit(1);
   }

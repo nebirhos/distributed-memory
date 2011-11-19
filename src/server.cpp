@@ -46,7 +46,7 @@ void Server::start() {
   try {
     listen_socket = new SocketServer( conf.port, conf.privkey, conf.pass );
   }
-  catch (runtime_error e) {
+  catch (const runtime_error& e) {
     Logger::error() << e.what() << endl;
     stop();
     return;
@@ -58,7 +58,7 @@ void Server::start() {
     try {
       listen_socket->accept( *new_socket );
     }
-    catch (runtime_error e) {
+    catch (const runtime_error& e) {
       pthread_mutex_lock( &mutex );
       Logger::error() << e.what() << endl;
       pthread_mutex_unlock( &mutex );
@@ -195,7 +195,7 @@ void Server::client_handler(SocketServer* socket) {
       (*socket) << ack;
     } // end while
   }
-  catch (runtime_error e) {
+  catch (const runtime_error& e) {
     pthread_mutex_lock( &mutex );
     Logger::error() << e.what() << endl;
     pthread_mutex_unlock( &mutex );

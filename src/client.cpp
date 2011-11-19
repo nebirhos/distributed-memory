@@ -63,7 +63,7 @@ int Client::dm_block_map(int id, void* address) {
     sock << req;
     sock >> req;
   }
-  catch(runtime_error e) {
+  catch(const runtime_error& e) {
     Logger::debug() << e.what() << endl;
     return -4;
   }
@@ -100,7 +100,7 @@ int Client::dm_block_unmap(int id) {
     sock << req;
     sock >> req;
   }
-  catch(runtime_error e) {
+  catch(const runtime_error& e) {
     Logger::debug() << e.what() << endl;
     return -4;
   }
@@ -138,7 +138,7 @@ int Client::dm_block_update(int id) {
     sock << req;
     sock >> req;
   }
-  catch(runtime_error e) {
+  catch(const runtime_error& e) {
     Logger::debug() << e.what() << endl;
     return -4;
   }
@@ -186,7 +186,7 @@ int Client::dm_block_write(int id) {
     sock << req;
     sock >> req;
   }
-  catch(runtime_error e) {
+  catch(const runtime_error& e) {
     Logger::debug() << e.what() << endl;
     return -4;
   }
@@ -230,7 +230,7 @@ int Client::dm_block_wait(int id) {
     sock << req;
     sock >> req;
   }
-  catch(runtime_error e) {
+  catch(const runtime_error& e) {
     Logger::debug() << e.what() << endl;
     return -4;
   }

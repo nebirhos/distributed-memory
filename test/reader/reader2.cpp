@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
   try {
     client.dm_init( argv[1] );
   }
-  catch (runtime_error e) {
+  catch (const runtime_error& e) {
     cerr << "Something nasty happened: " << e.what() << ", exiting..." << endl;
     return 1;
   }
