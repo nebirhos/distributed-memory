@@ -92,10 +92,14 @@ bool SecureSocket::open_client( const string host, const string port, const stri
   // M2: Response RECEIVE
   unsigned char* decrypted;
   int decrypted_size = recv_secure( decrypted );
+  if ( decrypted_size <= 0 ) {
+    Logger::debug() << "cannot decrypt M2" << endl;
+    return false;
+  }
   if ( (decrypted_size != 2*EVP_MAX_KEY_LENGTH) ||
        memcmp( decrypted, nonce, EVP_MAX_KEY_LENGTH ) ||
        memcmp( decrypted+EVP_MAX_KEY_LENGTH, m_session_key, EVP_MAX_KEY_LENGTH ) ) {
-    Logger::debug() << "cannot decrypt M2" << endl;
+    Logger::debug() << "wrong M2 received" << endl;
     delete[] decrypted;
     return false;
   }
@@ -212,6 +216,7 @@ int SecureSocket::recv_secure( unsigned char*& data ) const {
 
   int decrypted_size = cipher( DECRYPT, buffer, pkt_size, data );
   if ( decrypted_size < 0 ) {
+    delete[] data;
     delete[] buffer;
     return -1;
   }
