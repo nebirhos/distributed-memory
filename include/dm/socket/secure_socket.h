@@ -14,7 +14,7 @@
 /** Operation code for OpenSSL EVP decryption */
 #define DECRYPT       0
 /** Algorithm for symmetric encryption */
-#define CIPHER_ALG    EVP_aes_256_cbc()
+#define CIPHER_ALG    EVP_aes_256_ecb()
 
 #include "socket.h"
 #include <openssl/evp.h>

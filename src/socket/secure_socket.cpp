@@ -66,7 +66,7 @@ bool SecureSocket::open_client( const string host, const string port, const stri
   int res = EVP_BytesToKey( CIPHER_ALG, EVP_sha1(), salt,
                             (unsigned char*) m_pass.data(),
                             m_pass.size(), rounds, m_session_key, nonce );
-  if (res != EVP_MAX_KEY_LENGTH) {
+  if (res <= 0) {
     Logger::debug() << "cannot generate session key" << endl;
     return false;
   }
