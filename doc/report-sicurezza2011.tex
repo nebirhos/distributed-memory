@@ -1,0 +1,137 @@
+\documentclass[a4paper]{article}
+% Codifica italiana e sillabazione
+\usepackage[italian]{babel}
+\usepackage[utf8]{inputenc}
+% other
+\usepackage{url}
+\usepackage[pdftex,colorlinks=true,linkcolor=blue]{hyperref}
+\usepackage{ban-gny}
+\usepackage{amsthm}
+% metadata
+\newcommand{\Title}{Progetto di Sicurezza nei Sistemi Informatici \\
+  {\large \textbf{Anno Accademico 2010-2011}}}
+\newcommand{\Author}{Francesco Disperati, Alessio Celli}
+\hypersetup{
+  pdftitle={\Title},
+  pdfauthor={\Author},
+}
+\title{\Title}
+\author{\Author}
+\date{\today}
+
+
+% Document start
+\begin{document}
+\maketitle
+
+\section{Analisi dei requisiti}
+Viene richiesta la progettazione e l'implementazione di un protocollo per la comunicazione cifrata tra client-server. Requisiti:
+\begin{itemize}
+\item il server possiede una coppia di chiavi pubblica/privata
+\item la chiave pubblica è nota ai client (scambio out-of-band)
+\item i client condividono una passphrase segreta con il server
+\end{itemize}
+al termine del protocollo, client e server dispongono di una chiave di sessione simmetrica con cui comunicare.
+
+
+\section{Analisi del protocollo}
+
+\begin{tabular}{ p{4cm} p{4cm} p{4cm} }
+  {\bf Legenda}\\
+  $A$     client process &
+  $K_S$   session key &
+  $K_{B}$ server public key \\
+
+  $B$ server process &
+  $K$ shared secret &
+  $K_{B}^{-1}$ server private key \\
+
+  $N_A$ nonce 
+\end{tabular}
+
+
+\paragraph{Protocollo reale}
+\begin{list}{}{}
+\item M1. $ A \rightarrow B: E_{K_{B}}(N_A, K_S, K) $
+\item M2. $ B \rightarrow A: E_{K_S}(N_A, K_S) $
+\end{list}
+L'handshake consiste di due semplici passaggi. $A$ genera un nonce e la chiave di sessione, e li spedisce assieme al segreto $K$ a $B$, criptandoli con la sua chiave pubblica. $B$ decripta il messaggio, verifica la correttezza di $K$, e invia ad $A$ il nonce e la chiave di sessione criptati con la chiave di sessione stessa. $A$ verifica la correttezza della risposta e a questo punto entrambi i processi possono utilizzare la chiave di sessione.
+
+
+\paragraph{Protocollo ideale}
+\begin{list}{}{}
+\item M1. $ A \rightarrow B: \encrypt{N_A, \sharedkey{A}{B}{K_S}, \secret{A}{B}{K}}{K_B} $
+\item M2. $ B \rightarrow A: \encrypt{N_A, \sharedkey{A}{B}{K_S} }{K_S} $
+\end{list}
+
+Vogliamo dimostrare la {\bf key authentication}
+\begin{align}
+  \believes{B}{ \sharedkey{A}{B}{K_S} }& \qquad
+  \believes{A}{ \sharedkey{A}{B}{K_S} } \tag{T1}
+\end{align}
+
+e la {\bf key confirmation}
+\begin{align}
+  \believes{B}{ \believes{A}{ \sharedkey{A}{B}{K_S} } }& \qquad
+  \believes{A}{ \believes{B}{ \sharedkey{A}{B}{K_S} } } \tag{T2}
+\end{align}
+
+\begin{tabular}{ p{4cm} p{4cm} p{4cm} }
+
+  \parbox[t][][t]{4cm} {
+    {\bf Ipotesi secrecy}
+    \begin{align}
+      \believes{A&}{ \publickey{K_B}{B} }\\
+      \believes{A&}{ \sharedkey{A}{B}{K_S} }\\
+      \believes{A&}{ \secret{A}{B}{K} }\\
+      \believes{B&}{ \secret{A}{B}{K} }
+    \end{align}
+  }&
+
+  \parbox[t][][t]{4cm} {
+    {\bf Ipotesi freshness}
+    \begin{align}
+      \believes{A&}{ \fresh{N_A} }\\
+      \believes{B&}{ \fresh{N_A} }
+    \end{align}
+  }&
+
+  \parbox[t][][t]{4cm} {
+    {\bf Ipotesi mutual trust}
+    \begin{align}
+      \believes{B&}{ \jurisdiction{A}{ \sharedkey{A}{B}{K_S} } }
+    \end{align}
+  }
+\end{tabular} \\
+
+\begin{proof}
+Per l'ipotesi 2 abbiamo subito
+\[
+\believes{A}{ \sharedkey{A}{B}{K_S} }  \tag{ {\bf key authentication} for $A$ }
+\]
+
+Dopo M1 $\sees{B}{K}$, per l'ipotesi 4 e la {\em message meaning rule} otteniamo $ \believes{B}{ \said{A}{( \sharedkey{A}{B}{K_S}, N_A )} } $.
+
+Inoltre per l'ipotesi 6 e la {\em nonce verification rule}
+\[
+\believes{B}{ \believes{A}{ \sharedkey{A}{B}{K_S} } }   \tag{ {\bf key confirmation} for $B$}
+\]
+
+Per l'ipotesi 7 e la {\em jurisdiction rule} otteniamo anche
+\[
+\believes{B}{ \sharedkey{A}{B}{K_S} } \tag{ {\bf key authentication} for $B$ }
+\]
+
+Dopo M2 $\sees{A}{ \decrypt{N_A,K_S}{K_B} }$, ovvero per l'ipotesi 1 $\sees{A}{ (N_A,K_S) }$. Applicando la {\em message meaning rule}
+\[
+\believes{A}{ \believes{B}{ \sharedkey{A}{B}{K_S} } } \tag{ {\bf key confirmation} for $A$ }
+\]
+concludiamo la dimostrazione.
+\end{proof}
+
+
+\section{Implementazione}
+Per la realizzazione del protocollo sonos state utilizzate le librerie OpenSSL. Lo scambio di messaggi a chiave pubblica-privata è basato su RSA, mentre per la comunicazione simmetrica viene utilizzato AES-256 in modalità ECB. Per una descrizione dettagliata del codice fare riferimento alla documentazione {\tt doc/doxygen/html/}.
+
+
+\end{document}
