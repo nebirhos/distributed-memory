@@ -17,9 +17,9 @@ $(BIN): $(OBJECTS)
 clean:
 	rm -f $(BIN) $(OBJECTS)
 
-key_generate:
+key:
 	openssl genrsa -out serverkey.priv 2048
 	openssl rsa -in serverkey.priv -pubout -out serverkey.pub
 
-key_check:
+check_key:
 	openssl rsa -text -in serverkey.priv
