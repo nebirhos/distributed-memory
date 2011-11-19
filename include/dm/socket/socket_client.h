@@ -15,6 +15,7 @@ using namespace std;
 
 namespace DM {
 
+/** socket for use in Client processes */
 class SocketClient : public SecureSocket {
 public:
 

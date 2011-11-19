@@ -24,12 +24,15 @@
  * This project is intended for the course of Operating Systems And
  * Distributed Programming, held by prof. Giuseppe Lipari.
  *
+ * Secure communication protocol is an extension for the course of
+ * Security in Computing, held by prof. Gianluca Dini.
+ *
  * @section howto How do I use this documentation?
  * Documentation provides a brief explanation on how to develop a Distributed Memory
  * client using the library, and an analysis of overall implementation.
  *
  * Before starting, you should take a look at the project specifications
- * (doc/progetto-unix2010.pdf) and README.
+ * (doc/progetto-unix2010.pdf, doc/progetto-sicurezza2011.pdf) and README.
  *
  * Start @link DM::Client here @endlink
  */

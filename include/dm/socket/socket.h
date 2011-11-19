@@ -19,6 +19,7 @@ using namespace std;
 
 namespace DM {
 
+/** Wrapper class for socket C library */
 class Socket {
 protected:
   Socket();
