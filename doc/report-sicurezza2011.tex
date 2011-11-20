@@ -31,7 +31,7 @@ Viene richiesta la progettazione e l'implementazione di un protocollo per la com
 \item la chiave pubblica è nota ai client (scambio out-of-band)
 \item i client condividono una passphrase segreta con il server
 \end{itemize}
-al termine del protocollo, client e server dispongono di una chiave di sessione simmetrica con cui comunicare.
+al termine del protocollo, client e server devono disporre di una chiave di sessione simmetrica con cui comunicare.
 
 
 \section{Analisi del protocollo}
@@ -131,7 +131,7 @@ concludiamo la dimostrazione.
 
 
 \section{Implementazione}
-Per la realizzazione del protocollo sonos state utilizzate le librerie OpenSSL. Lo scambio di messaggi a chiave pubblica-privata è basato su RSA, mentre per la comunicazione simmetrica viene utilizzato AES-256 in modalità ECB. Per una descrizione dettagliata del codice fare riferimento alla documentazione {\tt doc/doxygen/html/}.
+Per la realizzazione del protocollo sono state utilizzate le librerie OpenSSL. Lo scambio di messaggi a chiave pubblica-privata è basato su RSA, mentre per la comunicazione simmetrica viene utilizzato AES-256 in modalità ECB. Per una descrizione dettagliata dell'implementazione fare riferimento alla documentazione ({\tt doc/doxygen/html/}).
 
 
 \end{document}
