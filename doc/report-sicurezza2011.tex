@@ -44,8 +44,6 @@ al termine del protocollo, client e server devono disporre di una chiave di sess
 
   $B$ server process &
   $K$ shared secret &
-  $K_{B}^{-1}$ server private key \\
-
   $N_A$ nonce 
 \end{tabular}
 
@@ -64,17 +62,24 @@ L'handshake consiste di due semplici passaggi. $A$ genera un nonce e la chiave d
 \item M2. $ B \rightarrow A: \encrypt{N_A, \sharedkey{A}{B}{K_S} }{K_S} $
 \end{list}
 
-Vogliamo dimostrare la {\bf key authentication}
+Vogliamo dimostrare la {\bf key authentication},
 \begin{align}
   \believes{B}{ \sharedkey{A}{B}{K_S} }& \qquad
   \believes{A}{ \sharedkey{A}{B}{K_S} } \tag{T1}
 \end{align}
 
-e la {\bf key confirmation}
+la {\bf key confirmation},
 \begin{align}
   \believes{B}{ \believes{A}{ \sharedkey{A}{B}{K_S} } }& \qquad
   \believes{A}{ \believes{B}{ \sharedkey{A}{B}{K_S} } } \tag{T2}
 \end{align}
+
+e la {\bf key freshness}
+\begin{align}
+  \believes{B}{ \fresh{\sharedkey{A}{B}{K_S}} }& \qquad
+  \believes{A}{ \fresh{\sharedkey{A}{B}{K_S}} } \tag{T3}
+\end{align}
+
 
 \begin{tabular}{ p{4cm} p{4cm} p{4cm} }
 
@@ -105,12 +110,11 @@ e la {\bf key confirmation}
 \end{tabular} \\
 
 \begin{proof}
-Per l'ipotesi 2 abbiamo subito
+La {\bf key freshness} e la {\bf key authentication} per $A$ sono date per ipotesi (2, 5, 6).
+Dopo M1 $\sees{B}{K}$, per l'ipotesi 4 e la {\em message meaning rule} otteniamo
 \[
-\believes{A}{ \sharedkey{A}{B}{K_S} }  \tag{ {\bf key authentication} for $A$ }
+\believes{B}{ \said{A}{( \sharedkey{A}{B}{K_S}, N_A )} }
 \]
-
-Dopo M1 $\sees{B}{K}$, per l'ipotesi 4 e la {\em message meaning rule} otteniamo $ \believes{B}{ \said{A}{( \sharedkey{A}{B}{K_S}, N_A )} } $.
 
 Inoltre per l'ipotesi 6 e la {\em nonce verification rule}
 \[
@@ -122,11 +126,14 @@ Per l'ipotesi 7 e la {\em jurisdiction rule} otteniamo anche
 \believes{B}{ \sharedkey{A}{B}{K_S} } \tag{ {\bf key authentication} for $B$ }
 \]
 
-Dopo M2 $\sees{A}{ \decrypt{N_A,K_S}{K_B} }$, ovvero per l'ipotesi 1 $\sees{A}{ (N_A,K_S) }$. Applicando la {\em message meaning rule}
+Dopo M2 $\sees{A}{ \encrypt{ \decrypt{N_A,\sharedkey{A}{B}{K_S}}{K_B} }{K_S} }$, ovvero $\sees{A}{ (N_A,\sharedkey{A}{B}{K_S}) }$. Per l'ipotesi 1 e la {\em message meaning rule}
+\[
+\believes{A}{ \said{B}{ \sharedkey{A}{B}{K_S} } }
+\]
+ed infine con l'ipotesi 5 e la {\em nonce verification rule}
 \[
 \believes{A}{ \believes{B}{ \sharedkey{A}{B}{K_S} } } \tag{ {\bf key confirmation} for $A$ }
 \]
-concludiamo la dimostrazione.
 \end{proof}
 
 
