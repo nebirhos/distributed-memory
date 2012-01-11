@@ -31,7 +31,7 @@ Viene richiesta la progettazione e l'implementazione di un protocollo per la com
 \item la chiave pubblica è nota ai client (scambio out-of-band)
 \item i client condividono una passphrase segreta con il server
 \end{itemize}
-al termine del protocollo, client e server devono disporre di una chiave di sessione simmetrica con cui comunicare.
+al termine del protocollo, client e server devono disporre di una chiave di sessione con cui comunicare.
 
 
 \section{Analisi del protocollo}
@@ -43,23 +43,24 @@ al termine del protocollo, client e server devono disporre di una chiave di sess
   $K_{B}$ server public key \\
 
   $B$ server process &
-  $K$ shared secret &
-  $N_A$ nonce 
+  $P$ shared secret &
+  $N_A, N_B$ nonce
 \end{tabular}
 
 
 \paragraph{Protocollo reale}
 \begin{list}{}{}
-\item M1. $ A \rightarrow B: E_{K_{B}}(N_A, K_S, K) $
-\item M2. $ B \rightarrow A: E_{K_S}(N_A, K_S) $
+\item M1. $ B \rightarrow A: N_B $
+\item M2. $ A \rightarrow B: E_{K_{B}}(K_S, N_A, N_B, P) $
+\item M3. $ B \rightarrow A: E_{K_S}(K_S, N_A) $
 \end{list}
-L'handshake consiste di due semplici passaggi. $A$ genera un nonce e la chiave di sessione, e li spedisce assieme al segreto $K$ a $B$, criptandoli con la sua chiave pubblica. $B$ decripta il messaggio, verifica la correttezza di $K$, e invia ad $A$ il nonce e la chiave di sessione criptati con la chiave di sessione stessa. $A$ verifica la correttezza della risposta e a questo punto entrambi i processi possono utilizzare la chiave di sessione.
+L'handshake consiste di tre semplici passaggi. $A$ apre una nuova connessione con il server $B$ che risponed inviando un nonce. $A$ genera la chiave di sessione e un nonce, e li spedisce assieme al segreto $P$ a $B$, criptandoli con la sua chiave pubblica. $B$ decripta il messaggio, verifica la correttezza di $P$, e invia ad $A$ il nonce e la chiave di sessione criptati con la chiave di sessione stessa. $A$ verifica la correttezza della risposta e a questo punto entrambi i processi possono utilizzare la chiave di sessione.
 
 
 \paragraph{Protocollo ideale}
 \begin{list}{}{}
-\item M1. $ A \rightarrow B: \encrypt{N_A, \sharedkey{A}{B}{K_S}, \secret{A}{B}{K}}{K_B} $
-\item M2. $ B \rightarrow A: \encrypt{N_A, \sharedkey{A}{B}{K_S} }{K_S} $
+\item M2. $ A \rightarrow B: \encrypt{N_A, N_B, \sharedkey{A}{B}{K_S}, \secret{A}{B}{P}}{K_B} $
+\item M3. $ B \rightarrow A: \encrypt{N_A, \sharedkey{A}{B}{K_S} }{K_S} $
 \end{list}
 
 Vogliamo dimostrare la {\bf key authentication},
@@ -88,8 +89,8 @@ e la {\bf key freshness}
     \begin{align}
       \believes{A&}{ \publickey{K_B}{B} }\\
       \believes{A&}{ \sharedkey{A}{B}{K_S} }\\
-      \believes{A&}{ \secret{A}{B}{K} }\\
-      \believes{B&}{ \secret{A}{B}{K} }
+      \believes{A&}{ \secret{A}{B}{P} }\\
+      \believes{B&}{ \secret{A}{B}{P} }
     \end{align}
   }&
 
@@ -97,7 +98,8 @@ e la {\bf key freshness}
     {\bf Ipotesi freshness}
     \begin{align}
       \believes{A&}{ \fresh{N_A} }\\
-      \believes{B&}{ \fresh{N_A} }
+      \believes{A&}{ \fresh{\sharedkey{A}{B}{K_S}} }\\
+      \believes{B&}{ \fresh{N_B} }
     \end{align}
   }&
 
@@ -110,23 +112,24 @@ e la {\bf key freshness}
 \end{tabular} \\
 
 \begin{proof}
-La {\bf key freshness} e la {\bf key authentication} per $A$ sono date per ipotesi (2, 5, 6).
-Dopo M1 $\sees{B}{K}$, per l'ipotesi 4 e la {\em message meaning rule} otteniamo
+La {\bf key freshness} e la {\bf key authentication} per $A$ sono date per ipotesi (2, 6).
+La {\bf key freshness} per $B$ è ottenuta con M2 e l'ipotesi 7.
+Dopo M2 $\sees{B}{P}$, per l'ipotesi 4 e la {\em message meaning rule} otteniamo
 \[
-\believes{B}{ \said{A}{( \sharedkey{A}{B}{K_S}, N_A )} }
+\believes{B}{ \said{A}{( \sharedkey{A}{B}{K_S}, N_A, N_B )} }
 \]
 
-Inoltre per l'ipotesi 6 e la {\em nonce verification rule}
+Inoltre per l'ipotesi 7 e la {\em nonce verification rule}
 \[
 \believes{B}{ \believes{A}{ \sharedkey{A}{B}{K_S} } }   \tag{ {\bf key confirmation} for $B$}
 \]
 
-Per l'ipotesi 7 e la {\em jurisdiction rule} otteniamo anche
+Per l'ipotesi 8 e la {\em jurisdiction rule} otteniamo anche
 \[
 \believes{B}{ \sharedkey{A}{B}{K_S} } \tag{ {\bf key authentication} for $B$ }
 \]
 
-Dopo M2 $\sees{A}{ \encrypt{ \decrypt{N_A,\sharedkey{A}{B}{K_S}}{K_B} }{K_S} }$, ovvero $\sees{A}{ (N_A,\sharedkey{A}{B}{K_S}) }$. Per l'ipotesi 1 e la {\em message meaning rule}
+Dopo M3 $\sees{A}{ \encrypt{ \decrypt{N_A,\sharedkey{A}{B}{K_S}}{K_B} }{K_S} }$, ovvero $\sees{A}{ (N_A,\sharedkey{A}{B}{K_S}) }$. Per l'ipotesi 1 e la {\em message meaning rule}
 \[
 \believes{A}{ \said{B}{ \sharedkey{A}{B}{K_S} } }
 \]

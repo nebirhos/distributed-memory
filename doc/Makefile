@@ -5,4 +5,4 @@ all:
 	rm *.aux *.log *.out
 
 clean:
-	rm -rf *.pdf
+	rm -rf report-sicurezza2011.pdf
