@@ -2,16 +2,7 @@ CXX = g++
 AR = ar
 BIN = ../bin/dmserver
 LIBRARY = ../bin/libdm.a
-SOURCES = dmserver.cpp \
-          config.cpp \
-          server.cpp \
-          block.cpp \
-          block_server.cpp \
-          block_local.cpp \
-          message.cpp \
-          base64.cpp \
-          logger.cpp \
-          client.cpp
+SOURCES = $(wildcard *.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 CPPFLAGS += -I../lib/yaml-cpp/include/ -I../include/
 CXXFLAGS += -Wall -Wextra
@@ -26,7 +17,6 @@ $(LIBRARY): $(OBJECTS)
 	$(AR) -cq $(LIBRARY) client.o \
                        config.o \
                        message.o \
-                       base64.o \
                        logger.o \
                        block.o \
                        block_server.o \
