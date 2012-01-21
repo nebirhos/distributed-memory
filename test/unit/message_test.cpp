@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <message.h>
 #include <dm/block_server.h>
-#include <base64.h>
 #include <cstring>
 
 

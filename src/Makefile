@@ -24,7 +24,6 @@ $(LIBRARY): $(OBJECTS)
 	$(AR) -cq $(LIBRARY) client.o \
                        config.o \
                        message.o \
-                       base64.o \
                        logger.o \
                        socket/*.o \
                        block.o \

@@ -48,7 +48,6 @@ message_test : message_test.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(USER_DIR)/message.o \
                                  $(USER_DIR)/block_server.o \
                                  $(USER_DIR)/block.o \
-                                 $(USER_DIR)/base64.o \
                                  $^ $(LDFLAGS) -o $@
 
 block_server_test : block_server_test.o
